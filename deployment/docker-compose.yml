@@ -1,13 +1,15 @@
 # -----------------------------------------------------------------------------
 # Price Updater — full stack
 #
+#   cd deployment
 #   docker compose up --build
 #
 #   Web client : http://localhost:4200
 #   API health : http://localhost:3000/health
 #
-# Login with the seeded development accounts (see the README). Everything below
-# can be overridden by copying `.env.docker.example` to `.env`.
+# The Dockerfiles live in this folder and build with the repository root as their
+# context (see ../.dockerignore). Everything below can be overridden by copying
+# `.env.example` to `.env`, in this same folder.
 # -----------------------------------------------------------------------------
 name: price-updater
 
@@ -72,7 +74,8 @@ services:
   # and the API and the worker only start once it has.
   migrate:
     build:
-      context: ./src/backend/prices-api
+      context: ..
+      dockerfile: deployment/backend.Dockerfile
     restart: "no"
     command: ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed/index.js"]
     environment: *api-environment
@@ -84,7 +87,8 @@ services:
 
   api:
     build:
-      context: ./src/backend/prices-api
+      context: ..
+      dockerfile: deployment/backend.Dockerfile
     restart: unless-stopped
     environment:
       <<: *api-environment
@@ -105,7 +109,8 @@ services:
   # with a different command, and can be scaled independently.
   worker:
     build:
-      context: ./src/backend/prices-api
+      context: ..
+      dockerfile: deployment/backend.Dockerfile
     restart: unless-stopped
     command: ["node", "dist/src/export-worker.js"]
     environment: *api-environment
@@ -119,7 +124,8 @@ services:
 
   web:
     build:
-      context: ./src/frontend/prices-admin
+      context: ..
+      dockerfile: deployment/frontend.Dockerfile
       args:
         # Empty uses the API URL committed in src/environments/environment.ts
         # (http://localhost:3000/api/v1). Set WEB_API_URL in `.env` to point the

@@ -1,0 +1,25 @@
+# Build context for deployment/backend.Dockerfile and deployment/frontend.Dockerfile.
+#
+# Both images build with the REPOSITORY ROOT as their context, so everything the
+# images do not need is excluded here. Without this file, `node_modules` and
+# `dist` would be uploaded to the Docker daemon on every single build.
+
+**/node_modules
+**/dist
+**/coverage
+**/.angular
+**/tmp
+**/out-tsc
+**/test-results
+**/playwright-report
+
+# Secrets: a local .env must never be baked into an image.
+**/.env
+**/.env.local
+**/*.log
+
+.git
+.gitignore
+.github
+.vscode
+docs

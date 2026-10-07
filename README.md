@@ -77,10 +77,9 @@ Price Updater is a tool for **administering prices, products and discounts** acr
 
 ```
 src/
-  backend/prices-api/     # REST API (Express + TypeScript) + Dockerfile
-  frontend/prices-admin/  # Admin dashboard (Angular) + Dockerfile
-docker-compose.yml        # Full Docker stack (MySQL, API, worker, web)
-.env.docker.example       # Compose overrides — copy to .env
+  backend/prices-api/     # REST API (Express + TypeScript)
+  frontend/prices-admin/  # Admin dashboard (Angular)
+deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
 docs/screenshots/         # Images used by this README
 README.md                 # This file
 LICENSE                   # MIT License
@@ -159,12 +158,12 @@ Open **http://localhost:4200** and log in with the credentials below.
 
 ## Docker
 
-The repository ships one `Dockerfile` per application plus a
-[`docker-compose.yml`](docker-compose.yml) that brings up the whole stack —
-MySQL, the API, the export worker and the web client:
+Everything Docker lives in [`deployment/`](deployment/): one `Dockerfile` per
+application plus a [`docker-compose.yml`](deployment/docker-compose.yml) that
+brings up the whole stack — MySQL, the API, the export worker and the web client:
 
 ```bash
-# from the repository root
+cd deployment
 docker compose up --build
 ```
 
@@ -181,7 +180,7 @@ box. Every other value (secrets, ports, the API URL the bundle points at) can be
 overridden by copying the example environment file:
 
 ```bash
-cp .env.docker.example .env     # Windows: copy .env.docker.example .env
+cd deployment && cp .env.example .env     # Windows: cd deployment; copy .env.example .env
 ```
 
 Two defaults matter before exposing the stack to the internet:
@@ -348,10 +347,9 @@ Price Updater es una herramienta para **administrar precios, productos y descuen
 
 ```
 src/
-  backend/prices-api/     # API REST (Express + TypeScript) + Dockerfile
-  frontend/prices-admin/  # Panel de administración (Angular) + Dockerfile
-docker-compose.yml        # Stack Docker completo (MySQL, API, worker, web)
-.env.docker.example       # Ajustes de Compose — copiar a .env
+  backend/prices-api/     # API REST (Express + TypeScript)
+  frontend/prices-admin/  # Panel de administración (Angular)
+deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
 docs/screenshots/         # Imágenes usadas por este README
 README.md                 # Este archivo
 LICENSE                   # Licencia MIT
@@ -430,12 +428,12 @@ Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo.
 
 ## Docker (contenedores)
 
-El repositorio incluye un `Dockerfile` por aplicación y un
-[`docker-compose.yml`](docker-compose.yml) que levanta todo el stack — MySQL, la
-API, el worker de exportaciones y el cliente web:
+Todo lo de Docker vive en [`deployment/`](deployment/): un `Dockerfile` por
+aplicación y un [`docker-compose.yml`](deployment/docker-compose.yml) que levanta
+todo el stack — MySQL, la API, el worker de exportaciones y el cliente web:
 
 ```bash
-# desde la raíz del repositorio
+cd deployment
 docker compose up --build
 ```
 
@@ -452,7 +450,7 @@ funcionan directamente. Cualquier otro valor (secretos, puertos, la URL de la AP
 que usa el bundle) se puede sobrescribir copiando el archivo de ejemplo:
 
 ```bash
-cp .env.docker.example .env     # Windows: copy .env.docker.example .env
+cd deployment && cp .env.example .env     # Windows: cd deployment; copy .env.example .env
 ```
 
 Dos valores por defecto conviene conocerlos antes de exponer el stack a internet:

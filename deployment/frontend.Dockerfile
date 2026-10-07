@@ -1,20 +1,25 @@
 # -----------------------------------------------------------------------------
 # Price Updater — Web client (Angular 19)
 #
+# The build context is the REPOSITORY ROOT, which is what lets this file live
+# under `deployment/` while the application stays under `src/`:
+#
+#   docker build -f deployment/frontend.Dockerfile -t price-updater-web .
+#
 # Stage 1 builds the production bundle; stage 2 serves it with nginx.
 # -----------------------------------------------------------------------------
 FROM node:22-bookworm-slim AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY src/frontend/prices-admin/package.json src/frontend/prices-admin/package-lock.json ./
 RUN npm ci
 
-COPY . .
+COPY src/frontend/prices-admin/ ./
 
 # The API base URL is compiled into the bundle. Override it at build time with
-#   docker build --build-arg API_URL=https://api.example.com/api/v1 ...
-# or, through Compose, by setting WEB_API_URL in `.env`.
+#   --build-arg API_URL=https://api.example.com/api/v1
+# or, through Compose, by setting WEB_API_URL in `deployment/.env`.
 # Without it, the value committed in src/environments/environment.ts is used.
 ARG API_URL=""
 RUN if [ -n "$API_URL" ]; then \
@@ -31,7 +36,7 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 FROM nginx:1.27-alpine
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY deployment/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/prices-admin/browser /usr/share/nginx/html
 
 EXPOSE 80
