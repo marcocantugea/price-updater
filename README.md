@@ -13,6 +13,8 @@ A **multi-tenant** administrative web application to capture, edit and propagate
 - [English](#english)
 - [Español](#español)
 
+![Price Updater — price catalog view](docs/screenshots/price-catalog.webp)
+
 ---
 
 # English
