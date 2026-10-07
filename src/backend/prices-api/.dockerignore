@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+*.log
+
+# Secrets: never bake a local .env into an image.
+.env
+.env.local
+
+.git
+.gitignore
+Dockerfile
+.dockerignore

@@ -1,0 +1,7 @@
+# Docker Compose reads `.env` from this directory for variable substitution and
+# it holds real secrets, so it must never be committed.
+.env
+.env.local
+
+node_modules/
+*.log
