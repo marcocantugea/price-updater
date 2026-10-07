@@ -20,6 +20,7 @@ A **multi-tenant** administrative web application to capture, edit and propagate
 ## Table of contents
 
 - [Overview](#overview)
+- [Disclaimer](#disclaimer)
 - [Features](#features)
 - [Stack](#stack)
 - [Prerequisites](#prerequisites)
@@ -39,7 +40,11 @@ A **multi-tenant** administrative web application to capture, edit and propagate
 
 ## Overview
 
-Price Updater lets you manage a **price catalog** per company (tenant), with **discount** rules, **price history** and an **audit** trail of every change. Phase 1 delivers the architecture, database, authentication, multi-tenant isolation, the main CRUDs, pricing/discount rules, history, audit, seeds and unit tests. **Real marketplace integration is intentionally out of scope** for now: the external API, API keys and scopes are the foundation to add it later.
+Price Updater lets you manage a **price catalog** per company (tenant), with **discount** rules, **price history** and an **audit** trail of every change. Phase 1 delivers the architecture, database, authentication, multi-tenant isolation, the main CRUDs, pricing/discount rules, history, audit, seeds and unit tests. Its scope is the **administration of prices, products and discounts** — see the [Disclaimer](#disclaimer).
+
+## Disclaimer
+
+Price Updater is a tool for **administering prices, products and discounts** across different sales platforms (marketplaces). **Integration with those platforms is not part of the project's vision**: the application does not connect to Amazon, Mercado Libre or any other marketplace, and it does not synchronize data with them. Its scope is limited to the administration of prices, products and discounts.
 
 ## Features
 
@@ -213,7 +218,9 @@ The backend uses **Jest** (no database needed: Prisma is mocked) plus an **integ
 
 ## Scope (Phase 1)
 
-Currently out of scope: stacking discounts, write scopes on the external API, real Amazon / Mercado Libre / owned-store integration, currency conversion and exchange rates, and inventory/images/variants.
+Outside the project's vision: **marketplace integration** — the application does not connect to or synchronize with Amazon, Mercado Libre or any other platform (see the [Disclaimer](#disclaimer)).
+
+Out of scope for this phase: stacking discounts, write scopes on the external API, currency conversion and exchange rates, and inventory/images/variants.
 
 ## License
 
@@ -226,6 +233,7 @@ This project is distributed under the [MIT License](LICENSE). You are free to us
 ## Tabla de contenidos
 
 - [Descripción](#descripción)
+- [Aviso (Disclaimer)](#aviso-disclaimer)
 - [Características](#características)
 - [Stack / Tecnologías](#stack--tecnologías)
 - [Requisitos previos](#requisitos-previos)
@@ -245,7 +253,11 @@ This project is distributed under the [MIT License](LICENSE). You are free to us
 
 ## Descripción
 
-Price Updater permite administrar un **catálogo de precios** por empresa (tenant), con reglas de **descuentos**, **historial de precios** y **auditoría** de cada cambio. La Fase 1 entrega la arquitectura, la base de datos, la autenticación, el aislamiento multi-tenant, los CRUD principales, las reglas de precios/descuentos, el historial, la auditoría, los seeds y las pruebas unitarias. **La integración real con los marketplaces queda fuera del alcance** por ahora: la API externa, las API keys y los scopes son la base para integrarla después.
+Price Updater permite administrar un **catálogo de precios** por empresa (tenant), con reglas de **descuentos**, **historial de precios** y **auditoría** de cada cambio. La Fase 1 entrega la arquitectura, la base de datos, la autenticación, el aislamiento multi-tenant, los CRUD principales, las reglas de precios/descuentos, el historial, la auditoría, los seeds y las pruebas unitarias. Su alcance es la **administración de precios, productos y descuentos** — ver el [Aviso](#aviso-disclaimer).
+
+## Aviso (Disclaimer)
+
+Price Updater es una herramienta para **administrar precios, productos y descuentos** en distintas plataformas de venta (marketplaces). **La integración con esas plataformas no forma parte de la visión del proyecto**: la aplicación no se conecta a Amazon, Mercado Libre ni a ninguna otra plataforma, ni sincroniza datos con ellas. Su alcance se limita a la administración de precios, productos y descuentos.
 
 ## Características
 
@@ -419,7 +431,9 @@ El backend usa **Jest** (sin base de datos: Prisma se simula) y una suite de **i
 
 ## Alcance (Fase 1)
 
-Fuera del alcance actual: descuentos acumulables, scopes de escritura en la API externa, integración real con Amazon / Mercado Libre / tienda propia, conversión de moneda y tipos de cambio, e inventario/imágenes/variantes.
+Fuera de la visión del proyecto: **la integración con los marketplaces** — la aplicación no se conecta ni sincroniza con Amazon, Mercado Libre ni ninguna otra plataforma (ver el [Aviso](#aviso-disclaimer)).
+
+Fuera del alcance de esta fase: descuentos acumulables, scopes de escritura en la API externa, conversión de moneda y tipos de cambio, e inventario/imágenes/variantes.
 
 ## Licencia
 
