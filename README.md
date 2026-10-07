@@ -1,5 +1,13 @@
 # Price Updater
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/tag/marcocantugea/price-updater?label=release&color=blue)](https://github.com/marcocantugea/price-updater/releases)
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=nodedotjs&logoColor=white)](#stack--tecnolog%C3%ADas)
+[![Angular](https://img.shields.io/badge/Angular-19-DD0031?logo=angular&logoColor=white)](#stack--tecnolog%C3%ADas)
+[![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)](#stack--tecnolog%C3%ADas)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](#stack--tecnolog%C3%ADas)
+[![Stars](https://img.shields.io/github/stars/marcocantugea/price-updater?style=social)](https://github.com/marcocantugea/price-updater/stargazers)
+
 A **multi-tenant** administrative web application to capture, edit and propagate **product prices** across several marketplaces (Amazon, Mercado Libre and an owned store). · Aplicación web administrativa **multi-tenant** para capturar, editar y propagar **precios de productos** en varios marketplaces (Amazon, Mercado Libre y tienda propia).
 
 - [English](#english)
