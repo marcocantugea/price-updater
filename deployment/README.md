@@ -30,6 +30,26 @@ docker compose up --build
 | Web client | http://localhost:4200 |
 | API health | http://localhost:3000/health |
 
+## Published images · Imágenes publicadas
+
+Both images are on Docker Hub, so the stack can run without building anything.
+· Ambas imágenes están en Docker Hub, así que el stack puede correr sin construir
+nada.
+
+| Image · Imagen | Contents · Contenido |
+|----------------|----------------------|
+| `marcocantugea/price-updater-api:1.0.0` | API, migrations and export worker |
+| `marcocantugea/price-updater-web:1.0.0` | Angular bundle served by nginx |
+
+```bash
+cd deployment
+docker compose pull      # fetch the published images · descargar las imágenes
+docker compose up -d
+```
+
+Set `IMAGE_TAG` in `.env` to pin another published version.
+· Ajusta `IMAGE_TAG` en `.env` para fijar otra versión publicada.
+
 ## Building an image on its own · Construir una imagen suelta
 
 Both Dockerfiles use the **repository root** as their build context, so they are

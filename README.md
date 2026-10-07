@@ -175,6 +175,14 @@ docker compose up --build
 | `migrate` | one-shot: applies the migrations and runs the seed, then exits |
 | `db` | MySQL 8 — not published on the host by default |
 
+Both images are published on Docker Hub, so they can be **pulled instead of
+built** (`docker compose pull && docker compose up -d`):
+
+| Image | Contents |
+|-------|----------|
+| `marcocantugea/price-updater-api:1.0.0` | API, migrations and export worker |
+| `marcocantugea/price-updater-web:1.0.0` | Angular bundle served by nginx |
+
 The seeds create the two login accounts, so the credentials below work out of the
 box. Every other value (secrets, ports, the API URL the bundle points at) can be
 overridden by copying the example environment file:
@@ -444,6 +452,14 @@ docker compose up --build
 | `worker` | procesa las exportaciones CSV / JSON / TXT en cola |
 | `migrate` | de un solo uso: aplica las migraciones y ejecuta el seed, luego sale |
 | `db` | MySQL 8 — no se publica en el host por defecto |
+
+Ambas imágenes están publicadas en Docker Hub, así que se pueden **descargar en
+lugar de construir** (`docker compose pull && docker compose up -d`):
+
+| Imagen | Contenido |
+|--------|-----------|
+| `marcocantugea/price-updater-api:1.0.0` | API, migraciones y worker de exportaciones |
+| `marcocantugea/price-updater-web:1.0.0` | Bundle de Angular servido por nginx |
 
 Los seeds crean las dos cuentas de acceso, así que las credenciales de abajo
 funcionan directamente. Cualquier otro valor (secretos, puertos, la URL de la API
