@@ -158,6 +158,22 @@ Open **http://localhost:4200** and log in with the credentials below.
 
 ## Docker
 
+### Quick start — prebuilt images
+
+Nothing is compiled and the repository is not needed: this single file pulls
+every service from Docker Hub.
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/deployment/docker-compose.images.yml
+docker compose -f docker-compose.images.yml up -d
+```
+
+Open **http://localhost:4200** and sign in with the credentials below. To change
+secrets, ports or the browser origin, put an `.env` file next to it — every value
+is listed in [`deployment/.env.example`](deployment/.env.example).
+
+### Build and run from this repository
+
 Everything Docker lives in [`deployment/`](deployment/): one `Dockerfile` per
 application plus a [`docker-compose.yml`](deployment/docker-compose.yml) that
 brings up the whole stack — MySQL, the API, the export worker and the web client:
@@ -175,8 +191,9 @@ docker compose up --build
 | `migrate` | one-shot: applies the migrations and runs the seed, then exits |
 | `db` | MySQL 8 — not published on the host by default |
 
-Both images are published on Docker Hub, so they can be **pulled instead of
-built** (`docker compose pull && docker compose up -d`):
+Both services also declare the published image names, so
+`docker compose pull && docker compose up -d` runs the released build instead of
+compiling one:
 
 | Image | Contents |
 |-------|----------|
@@ -436,6 +453,22 @@ Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo.
 
 ## Docker (contenedores)
 
+### Inicio rápido — imágenes ya construidas
+
+No se compila nada y no hace falta el repositorio: este único archivo descarga
+todos los servicios desde Docker Hub.
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/deployment/docker-compose.images.yml
+docker compose -f docker-compose.images.yml up -d
+```
+
+Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo. Para
+cambiar secretos, puertos u origen, pon un archivo `.env` junto a él — todos los
+valores están en [`deployment/.env.example`](deployment/.env.example).
+
+### Construir y ejecutar desde este repositorio
+
 Todo lo de Docker vive en [`deployment/`](deployment/): un `Dockerfile` por
 aplicación y un [`docker-compose.yml`](deployment/docker-compose.yml) que levanta
 todo el stack — MySQL, la API, el worker de exportaciones y el cliente web:
@@ -453,8 +486,9 @@ docker compose up --build
 | `migrate` | de un solo uso: aplica las migraciones y ejecuta el seed, luego sale |
 | `db` | MySQL 8 — no se publica en el host por defecto |
 
-Ambas imágenes están publicadas en Docker Hub, así que se pueden **descargar en
-lugar de construir** (`docker compose pull && docker compose up -d`):
+Ambos servicios también declaran los nombres de las imágenes publicadas, así que
+`docker compose pull && docker compose up -d` ejecuta la versión publicada en
+lugar de compilar una:
 
 | Imagen | Contenido |
 |--------|-----------|
