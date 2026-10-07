@@ -6,12 +6,16 @@ Docker assets for Price Updater. · Recursos Docker de Price Updater.
 
 | File · Archivo | Purpose · Propósito |
 |----------------|---------------------|
-| [`docker-compose.images.yml`](docker-compose.images.yml) | Quick start: the whole stack from the published images, nothing is built · Inicio rápido: todo el stack desde las imágenes publicadas, sin construir nada |
 | [`docker-compose.yml`](docker-compose.yml) | The whole stack built from source · Todo el stack construido desde el código |
 | [`backend.Dockerfile`](backend.Dockerfile) | API image (Express + TypeScript + Prisma) |
 | [`frontend.Dockerfile`](frontend.Dockerfile) | Web client image (Angular built, served by nginx) |
 | [`nginx.conf`](nginx.conf) | SPA fallback and cache policy for the web image |
 | [`.env.example`](.env.example) | Every value the stack accepts · Todos los valores configurables |
+
+The quick start that pulls the published images lives at the repository root, in
+[`../docker-compose.yml`](../docker-compose.yml).
+· El inicio rápido que descarga las imágenes publicadas está en la raíz del
+repositorio, en [`../docker-compose.yml`](../docker-compose.yml).
 
 The `.dockerignore` that keeps the build context small lives at the repository
 root, next to the sources it filters.
@@ -20,14 +24,15 @@ del repositorio.
 
 ## Quick start · Inicio rápido
 
-Nothing is compiled: every service pulls a published image, so this single file
-can be downloaded and run on its own.
-· No se compila nada: cada servicio descarga una imagen publicada, así que este
-único archivo se puede bajar y ejecutar por sí solo.
+Nothing is compiled: the [compose at the repository root](../docker-compose.yml)
+pulls every service from Docker Hub, so it can be run on its own.
+· No se compila nada: el [compose de la raíz](../docker-compose.yml) descarga
+todos los servicios desde Docker Hub, así que se ejecuta por sí solo.
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/deployment/docker-compose.images.yml
-docker compose -f docker-compose.images.yml up -d
+# from anywhere · desde cualquier lugar
+curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/docker-compose.yml
+docker compose up -d
 ```
 
 | Service · Servicio | URL |

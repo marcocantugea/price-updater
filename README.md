@@ -79,7 +79,8 @@ Price Updater is a tool for **administering prices, products and discounts** acr
 src/
   backend/prices-api/     # REST API (Express + TypeScript)
   frontend/prices-admin/  # Admin dashboard (Angular)
-deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
+docker-compose.yml        # Quick start: the stack from the published images
+deployment/               # Build from source: Dockerfiles, compose, nginx, .env
 docs/screenshots/         # Images used by this README
 README.md                 # This file
 LICENSE                   # MIT License
@@ -158,14 +159,20 @@ Open **http://localhost:4200** and log in with the credentials below.
 
 ## Docker
 
-### Quick start — prebuilt images
+### Quick start — published images
 
-Nothing is compiled and the repository is not needed: this single file pulls
-every service from Docker Hub.
+Nothing is compiled: the [`docker-compose.yml`](docker-compose.yml) at the
+repository root pulls every service from Docker Hub, so one command is enough.
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/deployment/docker-compose.images.yml
-docker compose -f docker-compose.images.yml up -d
+docker compose up -d
+```
+
+It is self-contained, so it also works on its own, without cloning anything:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/docker-compose.yml
+docker compose up -d
 ```
 
 Open **http://localhost:4200** and sign in with the credentials below. To change
@@ -374,7 +381,8 @@ Price Updater es una herramienta para **administrar precios, productos y descuen
 src/
   backend/prices-api/     # API REST (Express + TypeScript)
   frontend/prices-admin/  # Panel de administración (Angular)
-deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
+docker-compose.yml        # Inicio rápido: el stack desde las imágenes publicadas
+deployment/               # Construir desde el código: Dockerfiles, compose, nginx, .env
 docs/screenshots/         # Imágenes usadas por este README
 README.md                 # Este archivo
 LICENSE                   # Licencia MIT
@@ -453,14 +461,20 @@ Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo.
 
 ## Docker (contenedores)
 
-### Inicio rápido — imágenes ya construidas
+### Inicio rápido — imágenes publicadas
 
-No se compila nada y no hace falta el repositorio: este único archivo descarga
-todos los servicios desde Docker Hub.
+No se compila nada: el [`docker-compose.yml`](docker-compose.yml) de la raíz
+descarga todos los servicios desde Docker Hub, así que basta con un comando.
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/deployment/docker-compose.images.yml
-docker compose -f docker-compose.images.yml up -d
+docker compose up -d
+```
+
+Es autocontenido, así que también funciona por sí solo, sin clonar nada:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/docker-compose.yml
+docker compose up -d
 ```
 
 Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo. Para

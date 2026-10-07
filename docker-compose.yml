@@ -1,26 +1,30 @@
 # -----------------------------------------------------------------------------
 # Price Updater — quick start from the published images
 #
-# Nothing is built here: every service pulls a published image, so this single
-# file is self-contained and works without cloning the repository:
+# This file lives at the repository root, so it is the default project of
+# `docker compose`: nothing is built, every service pulls a published image.
 #
-#   curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/deployment/docker-compose.images.yml
-#   docker compose -f docker-compose.images.yml up -d
+#   docker compose up -d
 #
 #   Web client : http://localhost:4200
 #   API health : http://localhost:3000/health
 #
+# It is self-contained, so it also works on its own, without cloning anything:
+#
+#   curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/docker-compose.yml
+#   docker compose up -d
+#
 # The defaults below already produce a working demo. To change secrets, ports or
 # the browser origin, drop an `.env` file next to this one (Compose reads it
-# automatically); `deployment/.env.example` in the repository lists every value.
+# automatically); `deployment/.env.example` lists every value.
 #
-# To build from source instead, use docker-compose.yml.
+# To build the images from source instead, use deployment/docker-compose.yml.
 # -----------------------------------------------------------------------------
 name: price-updater
 
 # Shared by the API and the export worker: both are the same image and need the
 # same database, secrets and storage directory.
-# Keep this anchor in sync with docker-compose.yml.
+# Keep this anchor in sync with deployment/docker-compose.yml.
 x-api-environment: &api-environment
   NODE_ENV: production
   DATABASE_URL: mysql://${MYSQL_USER:-pricegrid_user_db}:${MYSQL_PASSWORD:-change-me}@db:3306/${MYSQL_DATABASE:-pricesgrid}
