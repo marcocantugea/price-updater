@@ -1,0 +1,196 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-forest">{{ 'settings.title' | transloco }}</h1>
+    <p class="text-sm text-olive mt-1">{{ 'settings.subtitle' | transloco }}</p>
+  </div>
+
+  <!-- Session context -->
+  <div class="pg-card p-5">
+    <h2 class="text-sm font-semibold text-forest mb-3">{{ 'settings.session.title' | transloco }}</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+      <div>
+        <dt class="text-xs uppercase tracking-wide text-olive">{{ 'settings.session.user' | transloco }}</dt>
+        <dd class="font-medium text-forest mt-0.5">{{ session.user()?.name ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs uppercase tracking-wide text-olive">{{ 'settings.session.role' | transloco }}</dt>
+        <dd class="font-medium text-forest mt-0.5">{{ session.user()?.roleSlug ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs uppercase tracking-wide text-olive">{{ 'settings.session.permissions' | transloco }}</dt>
+        <dd class="font-medium text-forest mt-0.5">{{ session.permissions().length }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  @if (hasTenantContext()) {
+    <div class="pg-card p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold text-forest">{{ 'settings.timeZone.title' | transloco }}</h2>
+          <p class="text-sm text-olive mt-1">{{ 'settings.timeZone.subtitle' | transloco }}</p>
+        </div>
+        <lucide-icon name="globe-2" class="w-5 h-5 text-forest"></lucide-icon>
+      </div>
+      <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <label class="flex-1 text-sm text-olive">
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide">{{ 'settings.timeZone.label' | transloco }}</span>
+          <input
+            type="search"
+            class="mb-2 w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-forest"
+            [placeholder]="'settings.timeZone.searchPlaceholder' | transloco"
+            [value]="timeZoneSearch()"
+            [disabled]="timeZoneSaving()"
+            (input)="timeZoneSearch.set($any($event.target).value)"
+          />
+          <select
+            class="w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-forest"
+            [value]="selectedTimeZone()"
+            [disabled]="!session.hasPermission('settings:update') || timeZoneSaving()"
+            (change)="selectedTimeZone.set($any($event.target).value)"
+          >
+            @for (option of filteredTimeZoneOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+        <div class="text-sm text-olive sm:min-w-52">
+          <span class="block text-xs font-semibold uppercase tracking-wide">{{ 'settings.timeZone.clockLabel' | transloco }}</span>
+          <span class="mt-2 block font-medium text-forest">{{ currentBusinessTime() }}</span>
+        </div>
+        @if (session.hasPermission('settings:update')) {
+          <button
+            type="button"
+            class="rounded-md bg-forest px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            [disabled]="timeZoneSaving()"
+            (click)="saveTimeZone()"
+          >
+            {{ timeZoneSaving() ? ('settings.timeZone.saving' | transloco) : ('settings.timeZone.save' | transloco) }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Currencies (read-only in phase 1) -->
+  @if (hasTenantContext()) {
+    <div class="pg-card overflow-hidden">
+      <div class="p-5 border-b border-line flex items-start gap-3">
+        <div class="p-2 bg-sidebar rounded-lg text-forest border border-line">
+          <lucide-icon name="lock" class="w-4 h-4"></lucide-icon>
+        </div>
+        <div>
+          <h2 class="text-lg font-semibold text-forest">{{ 'settings.currencies.title' | transloco }}</h2>
+          <p class="text-sm text-olive mt-0.5">
+            {{ 'settings.currencies.description' | transloco }}
+          </p>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <app-state-panel state="loading" [message]="'settings.currencies.loading' | transloco" />
+      } @else if (error()) {
+        <app-state-panel state="error" [message]="error()!" [showRetry]="false" />
+      } @else if (currencies().length === 0) {
+        <app-state-panel
+          state="empty"
+          [title]="'settings.currencies.emptyTitle' | transloco"
+          [message]="'settings.currencies.emptyMessage' | transloco"
+        />
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-olive" data-testid="currencies-table">
+            <thead class="bg-sidebar/60 text-xs uppercase font-semibold text-forest">
+              <tr>
+                <th class="px-5 py-3">{{ 'settings.currencies.columns.code' | transloco }}</th>
+                <th class="px-5 py-3">{{ 'settings.currencies.columns.name' | transloco }}</th>
+                <th class="px-5 py-3">{{ 'settings.currencies.columns.symbol' | transloco }}</th>
+                <th class="px-5 py-3 text-right">{{ 'settings.currencies.columns.decimals' | transloco }}</th>
+                <th class="px-5 py-3">{{ 'settings.currencies.columns.status' | transloco }}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line/60">
+              @for (currency of currencies(); track currency.code) {
+                <tr class="hover:bg-sidebar/30 transition-colors">
+                  <!-- `code` stays the primary identifier; the name is localized when `Intl.DisplayNames` knows it. -->
+                  <td class="px-5 py-3 font-medium text-forest">{{ currency.code }}</td>
+                  <td class="px-5 py-3">{{ formatting.displayName(currency.code, 'currency') ?? currency.name }}</td>
+                  <td class="px-5 py-3">{{ currency.symbol }}</td>
+                  <td class="px-5 py-3 text-right">{{ currency.decimals }}</td>
+                  <td class="px-5 py-3"><app-status-badge [value]="currency.status" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!--
+    Catalog navigation. Each section carries a single button and no table: the
+    listing and the create/edit/deactivate flows live on the destination page,
+    which is bookmarkable on its own URL.
+  -->
+  @if (session.isGlobalAdmin()) {
+    <div class="pg-card p-5" data-testid="settings-suppliers">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-sidebar rounded-lg text-forest border border-line">
+            <lucide-icon name="truck" class="w-4 h-4"></lucide-icon>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-forest">{{ 'settings.suppliers.title' | transloco }}</h2>
+            <p class="text-sm text-olive mt-0.5">{{ 'settings.suppliers.description' | transloco }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="shrink-0 rounded-md bg-forest px-4 py-2 text-sm font-semibold text-white"
+          (click)="openSuppliers()"
+          data-testid="manage-suppliers"
+        >
+          {{ 'settings.suppliers.action' | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (session.isGlobalAdmin()) {
+    <div class="pg-card p-5" data-testid="settings-units">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-sidebar rounded-lg text-forest border border-line">
+            <lucide-icon name="ruler" class="w-4 h-4"></lucide-icon>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold text-forest">{{ 'settings.unitsOfMeasure.title' | transloco }}</h2>
+            <p class="text-sm text-olive mt-0.5">{{ 'settings.unitsOfMeasure.description' | transloco }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="shrink-0 rounded-md bg-forest px-4 py-2 text-sm font-semibold text-white"
+          (click)="openUnitsOfMeasure()"
+          data-testid="manage-units-of-measure"
+        >
+          {{ 'settings.unitsOfMeasure.action' | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Phase note -->
+  <div class="pg-card p-5 flex items-start gap-3">
+    <div class="p-2 bg-active rounded-lg text-forest">
+      <lucide-icon name="info" class="w-4 h-4"></lucide-icon>
+    </div>
+    <div class="text-sm text-olive">
+      <p class="font-medium text-forest">{{ 'settings.discountRules.title' | transloco }}</p>
+      <p class="mt-1">
+        <strong>{{ 'settings.discountRules.singleDiscount' | transloco }}</strong>
+        {{ 'settings.discountRules.stacking' | transloco }}
+      </p>
+    </div>
+  </div>
+</div>

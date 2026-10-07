@@ -1,0 +1,394 @@
+<div class="space-y-6">
+  <!-- Page header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-forest">{{ title() | displayText }}</h1>
+      @if (subtitle()) {
+        <p class="text-sm text-olive mt-1">{{ subtitle() | displayText }}</p>
+      }
+    </div>
+
+    <div class="flex gap-3">
+      <button
+        type="button"
+        class="px-4 py-2 bg-white border border-line text-forest rounded-lg text-sm font-medium shadow-sm hover:bg-sidebar transition-colors"
+        (click)="refresh()"
+        data-testid="refresh-button"
+      >
+        {{ 'common.refresh' | transloco }}
+      </button>
+      @if (canCreate()) {
+        <button
+          type="button"
+          class="px-4 py-2 bg-forest text-white rounded-lg text-sm font-medium shadow-sm hover:bg-forest/90 transition-colors inline-flex items-center gap-2"
+          (click)="openCreate()"
+          data-testid="create-button"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          {{ createLabel() }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="pg-card p-4 flex flex-col lg:flex-row lg:items-center gap-3">
+    <div class="relative flex-1 lg:max-w-sm">
+      <svg
+        class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-olive pointer-events-none"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+      <input
+        [formControl]="searchInput"
+        type="search"
+        class="pg-input pl-9"
+        [placeholder]="searchPlaceholder() | displayText"
+        data-testid="search-input"
+      />
+    </div>
+
+    @if (statusFilter()) {
+      <div class="flex flex-wrap gap-2" data-testid="status-chips">
+        @for (chip of statusChips; track chip.value) {
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+            [class]="status() === chip.value
+              ? 'bg-active text-forest border-forest/20'
+              : 'bg-white text-olive border-line hover:bg-sidebar'"
+            (click)="setStatus(chip.value)"
+          >
+            {{ chip.label | displayText }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- States and table -->
+  @if (loading()) {
+    <app-state-panel state="loading" [message]="loadingMessage()" />
+  } @else if (error()) {
+    <app-state-panel state="error" [message]="error()!" (retry)="refresh()" />
+  } @else if (items().length === 0) {
+    <app-state-panel
+      state="empty"
+      [title]="emptyTitle()"
+      [message]="emptyHint()"
+    />
+  } @else {
+    <div class="pg-card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-olive" data-testid="data-table">
+          <thead class="bg-sidebar/60 text-xs uppercase font-semibold text-forest">
+            <tr>
+              @for (column of columns(); track column.key) {
+                <th
+                  class="px-5 py-3 whitespace-nowrap"
+                  [class.cursor-pointer]="column.sortable"
+                  [class.text-right]="column.align === 'right'"
+                  (click)="toggleSort(column)"
+                >
+                  {{ column.label | displayText }}
+                  @if (column.sortable && sort() === column.key) {
+                    <span class="ml-1 text-olive">{{ order() === 'asc' ? '▲' : '▼' }}</span>
+                  }
+                </th>
+              }
+              @if (canEdit() || canDelete() || rowActions().length > 0) {
+                <th class="px-5 py-3 text-right">{{ 'common.actions' | transloco }}</th>
+              }
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-line/60">
+            @for (row of items(); track row.id) {
+              <tr class="hover:bg-sidebar/30 transition-colors" [attr.data-row-id]="row.id">
+                @for (column of columns(); track column.key) {
+                  <td class="px-5 py-4" [class.text-right]="column.align === 'right'">
+                    @switch (column.type) {
+                      @case ('status') {
+                        <app-status-badge [value]="asStatus(cell(row, column))" />
+                      }
+                      @case ('money') {
+                        <span class="font-medium text-forest">{{
+                          asNumber(cell(row, column)) | money: currencyOf(row, column)
+                        }}</span>
+                      }
+                      @case ('date') {
+                        {{ asStatus(cell(row, column)) | appDate: false : column.dateOnly }}
+                      }
+                      @case ('boolean') {
+                        {{ (cell(row, column) ? 'common.yes' : 'common.no') | transloco }}
+                      }
+                      @default {
+                        {{ cellText(row, column) }}
+                      }
+                    }
+                  </td>
+                }
+
+                @if (canEdit() || canDelete() || rowActions().length > 0) {
+                  <td class="px-5 py-4 text-right whitespace-nowrap">
+                    @for (action of visibleRowActions(row); track $index) {
+                      <button
+                        type="button"
+                        class="mr-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors"
+                        [class]="action.tone === 'danger'
+                          ? 'border-danger/30 text-danger hover:bg-danger/10'
+                          : 'border-line text-forest hover:bg-active'"
+                        (click)="action.run(row)"
+                        data-testid="row-action"
+                      >
+                        {{ action.label | displayText }}
+                      </button>
+                    }
+                    @if (canEdit()) {
+                      <button
+                        type="button"
+                        class="px-3 py-1.5 text-xs font-medium rounded-lg border border-line text-forest hover:bg-active transition-colors"
+                        (click)="openEdit(row)"
+                        data-testid="edit-button"
+                      >
+                        {{ 'common.edit' | transloco }}
+                      </button>
+                    }
+                    @if (canDelete()) {
+                      <button
+                        type="button"
+                        class="ml-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-danger/30 text-danger hover:bg-danger/10 transition-colors"
+                        (click)="askDelete(row)"
+                        data-testid="delete-button"
+                      >
+                        {{ 'common.delete' | transloco }}
+                      </button>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-line">
+        <!--
+          One complete translatable sentence with parameters: page numbers are
+          never concatenated, so word order and pluralisation stay under the
+          translator's control.
+        -->
+        <p class="text-xs text-olive" data-testid="pagination-summary">
+          {{ 'common.pagination' | transloco: {
+            page: meta().page,
+            totalPages: meta().totalPages || 1,
+            total: meta().total
+          } }}
+        </p>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg border border-line text-forest hover:bg-sidebar disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="meta().page <= 1"
+            (click)="goToPage(meta().page - 1)"
+          >
+            {{ 'common.previous' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium rounded-lg border border-line text-forest hover:bg-sidebar disabled:opacity-50 disabled:cursor-not-allowed"
+            [disabled]="meta().totalPages !== 0 && meta().page >= meta().totalPages"
+            (click)="goToPage(meta().page + 1)"
+          >
+            {{ 'common.next' | transloco }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Create / edit modal -->
+  <app-modal [open]="modalOpen()" [title]="modalTitle()" [subtitle]="formSubtitle()" (closed)="closeModal()">
+    @if (modalOpen()) {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5" data-testid="crud-form">
+      @if (formError()) {
+        <div class="px-4 py-3 rounded-lg bg-danger/10 border border-danger/30 text-sm text-forest" data-testid="form-error">
+          {{ formError() }}
+        </div>
+      }
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        @for (field of visibleFields(); track field.key) {
+          @if (isVisible(field)) {
+            <div [class.md:col-span-2]="field.full">
+              <label class="pg-label" [attr.for]="'field-' + field.key">{{ field.label | displayText }}</label>
+
+              @switch (field.type) {
+                @case ('textarea') {
+                  <textarea
+                    [id]="'field-' + field.key"
+                    [formControlName]="field.key"
+                    rows="3"
+                    class="pg-input resize-y"
+                    [class.pg-input-invalid]="isInvalid(field)"
+                    [attr.maxlength]="field.maxLength ?? null"
+                    [placeholder]="field.placeholder | displayText"
+                  ></textarea>
+                }
+                @case ('select') {
+                  <select
+                    [id]="'field-' + field.key"
+                    [formControlName]="field.key"
+                    class="pg-input"
+                    [class.pg-input-invalid]="isInvalid(field)"
+                  >
+                    <option value="">{{ 'common.selectOption' | transloco }}</option>
+                    @for (option of optionsFor(field); track option.value) {
+                      <option [value]="option.value">{{ option.label | displayText }}</option>
+                    }
+                  </select>
+                }
+                @case ('autocomplete') {
+                  <app-async-autocomplete
+                    [id]="'field-' + field.key"
+                    [placeholder]="field.placeholder | displayText"
+                    [search]="asyncSourceFor(field)"
+                    [minLength]="field.minLength ?? 4"
+                    [invalid]="isInvalid(field)"
+                    [initialOption]="initialOptionFor(field)"
+                    [testId]="'autocomplete-' + field.key"
+                    [formControlName]="field.key"
+                    (optionSelected)="onAutocompleteSelected(field)"
+                  ></app-async-autocomplete>
+                }
+                @case ('checkbox') {
+                  <label class="inline-flex items-center gap-2 text-sm text-forest">
+                    <input
+                      type="checkbox"
+                      [id]="'field-' + field.key"
+                      [formControlName]="field.key"
+                      class="rounded border-line text-forest focus:ring-forest"
+                    />
+                    <span>{{ field.help ? (field.help | displayText) : ('common.enable' | transloco) }}</span>
+                  </label>
+                }
+                @case ('toggle') {
+                  <app-switch
+                    [id]="'field-' + field.key"
+                    [formControlName]="field.key"
+                    [testId]="'toggle-' + field.key"
+                  ></app-switch>
+                }
+                @default {
+                  <input
+                    [id]="'field-' + field.key"
+                    [type]="field.type"
+                    [formControlName]="field.key"
+                    [attr.min]="field.min"
+                    [attr.max]="field.max"
+                    [attr.step]="field.step"
+                    [attr.maxlength]="field.maxLength ?? null"
+                    class="pg-input"
+                    [class.pg-input-invalid]="isInvalid(field)"
+                    [placeholder]="field.placeholder | displayText"
+                  />
+                }
+              }
+
+              @if (field.help && field.type !== 'checkbox') {
+                <p class="text-xs text-olive mt-1">{{ field.help | displayText }}</p>
+              }              @if (fieldError(field.key)) {
+                <p class="text-xs text-danger mt-1" data-testid="field-error">{{ fieldError(field.key) }}</p>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      @if (previewRunner()) {
+        <div class="pt-2 border-t border-line">
+          <button
+            type="button"
+            class="px-4 py-2 bg-header text-forest border border-line rounded-lg text-sm font-medium hover:bg-active transition-colors"
+            (click)="runPreview()"
+            [disabled]="previewing()"
+            data-testid="preview-button"
+          >
+            {{ previewing() ? ('crud.previewing' | transloco) : (previewLabel() | displayText) }}
+          </button>
+
+          @if (previewResults().length > 0) {
+            <dl class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3" data-testid="preview-results">
+              @for (result of previewResults(); track $index) {
+                <div class="rounded-lg border border-line bg-white px-4 py-3">
+                  <dt class="text-xs uppercase tracking-wide text-olive">{{ result.label | displayText }}</dt>
+                  <dd class="text-lg font-semibold text-forest mt-1">{{ result.value | displayText }}</dd>
+                  @if (result.hint) {
+                    <p class="text-xs text-olive mt-0.5">{{ result.hint | displayText }}</p>
+                  }
+                </div>
+              }
+            </dl>
+          }
+        </div>
+      }
+
+      <div class="pt-4 flex items-center justify-end gap-3 border-t border-line">
+        <button
+          type="button"
+          class="px-4 py-2.5 bg-header text-forest border border-line rounded-md text-sm font-medium hover:bg-active transition-colors"
+          (click)="closeModal()"
+        >
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          type="submit"
+          class="px-5 py-2.5 bg-forest text-white rounded-md text-sm font-medium shadow-sm hover:bg-forest/90 transition-colors disabled:opacity-60"
+          [disabled]="saving()"
+          data-testid="submit-button"
+        >
+          {{ saving() ? ('common.saving' | transloco) : ('common.save' | transloco) }}
+        </button>
+      </div>
+    </form>
+    }
+  </app-modal>
+
+  <!-- Delete confirmation -->
+  <app-modal
+    [open]="deleteTarget() !== null"
+    [title]="deleteTitle()"
+    [subtitle]="deleteSubtitle()"
+    (closed)="cancelDelete()"
+  >
+    <p class="text-sm text-olive">
+      {{ deleteMessage() }}
+    </p>
+    <div class="pt-5 flex items-center justify-end gap-3">
+      <button
+        type="button"
+        class="px-4 py-2.5 bg-header text-forest border border-line rounded-md text-sm font-medium hover:bg-active transition-colors"
+        (click)="cancelDelete()"
+      >
+        {{ 'common.cancel' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="px-5 py-2.5 bg-danger text-white rounded-md text-sm font-medium hover:bg-danger/90 transition-colors disabled:opacity-60"
+        [disabled]="deleting()"
+        (click)="confirmDelete()"
+        data-testid="confirm-delete-button"
+      >
+        {{ deleting() ? ('common.deleting' | transloco) : ('common.delete' | transloco) }}
+      </button>
+    </div>
+  </app-modal>
+</div>

@@ -1,0 +1,26 @@
+<!doctype html>
+<!--
+  `lang` and the title are FALLBACKS only. At runtime `LanguageService` sets
+  `document.documentElement.lang`, `dir` and the title from the active locale
+  once the catalogs load, so this file must not hard-code a single language for
+  the whole application.
+-->
+<html lang="es-419">
+  <head>
+    <meta charset="utf-8" />
+    <title>Price Updater — Administración de precios</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!--
+      No remote webfont is referenced on purpose: the production build inlines
+      fonts, so an external Google Fonts link makes `ng build` fail offline.
+      The UI uses a system font stack (see tailwind.config.js). To use Inter,
+      self-host the .woff2 files and declare @font-face in src/styles.css
+      instead of linking to a CDN.
+    -->
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
+</html>

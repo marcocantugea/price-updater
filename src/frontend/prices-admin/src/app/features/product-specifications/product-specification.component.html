@@ -1,0 +1,347 @@
+<div class="space-y-6">
+  <!-- Header: a real back link, because the page is bookmarkable and must not
+       depend on the browser history stack. -->
+  <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div class="min-w-0">
+      <a class="text-sm text-olive underline hover:text-forest" [routerLink]="['/products']">
+        ← {{ 'productSpecification.back' | transloco }}
+      </a>
+
+      <h1 class="mt-2 truncate text-2xl font-semibold text-forest">
+        {{ 'productSpecification.title' | transloco }}
+      </h1>
+
+      @if (aggregate(); as data) {
+        <p class="mt-1 text-sm text-olive">
+          <span class="font-medium text-forest">{{ data.product.sku }}</span>
+          · {{ data.product.name }}
+        </p>
+      }
+    </div>
+
+    @if (aggregate() && canEdit()) {
+      <div class="flex flex-wrap gap-2">
+        @if (mode() === 'view') {
+          <button
+            type="button"
+            class="rounded border border-forest bg-forest px-4 py-2 text-sm text-surface"
+            data-testid="specification-edit"
+            (click)="startEdit()"
+          >
+            {{ 'common.edit' | transloco }}
+          </button>
+          <button
+            type="button"
+            class="rounded border border-line px-4 py-2 text-sm text-danger hover:border-danger"
+            data-testid="specification-clear"
+            (click)="confirmClear()"
+          >
+            {{ 'productSpecification.actions.clear' | transloco }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="rounded border border-forest bg-forest px-4 py-2 text-sm text-surface disabled:opacity-50"
+            data-testid="specification-save"
+            [disabled]="saving()"
+            (click)="save()"
+          >
+            {{ (saving() ? 'common.saving' : 'common.save') | transloco }}
+          </button>
+          <button
+            type="button"
+            class="rounded border border-line px-4 py-2 text-sm text-forest"
+            data-testid="specification-cancel"
+            [disabled]="saving()"
+            (click)="cancelEdit()"
+          >
+            {{ 'common.cancel' | transloco }}
+          </button>
+        }
+      </div>
+    }
+  </header>
+
+  <!-- `aria-live` so the result of a save reaches a screen reader without the
+       user having to look for it. -->
+  <div aria-live="polite" class="space-y-2">
+    @if (savedMessage(); as message) {
+      <p class="rounded border border-positive/40 bg-active px-4 py-2 text-sm text-forest">
+        {{ message | transloco }}
+      </p>
+    }
+
+    @if (saveError(); as message) {
+      <p class="rounded border border-danger/40 bg-surface px-4 py-2 text-sm text-danger">{{ message }}</p>
+    }
+
+    @if (!canEdit()) {
+      <p class="rounded border border-line bg-surface px-4 py-2 text-sm text-olive">
+        {{ 'productSpecification.readOnly' | transloco }}
+      </p>
+    }
+  </div>
+
+  <!-- Inline confirmation instead of a browser dialog: translatable, keyboard
+       reachable, and testable without stubbing window.confirm. -->
+  @if (confirmingClear()) {
+    <div class="rounded border border-danger/40 bg-surface p-4" role="alertdialog" aria-labelledby="clear-title">
+      <h2 id="clear-title" class="font-semibold text-forest">
+        {{ 'productSpecification.actions.clearTitle' | transloco }}
+      </h2>
+      <p class="mt-1 text-sm text-olive">{{ 'productSpecification.actions.clearMessage' | transloco }}</p>
+      <div class="mt-3 flex gap-2">
+        <button
+          type="button"
+          class="rounded border border-danger bg-danger px-3 py-1 text-sm text-surface disabled:opacity-50"
+          data-testid="specification-clear-confirm"
+          [disabled]="saving()"
+          (click)="clearSpecification()"
+        >
+          {{ 'productSpecification.actions.clear' | transloco }}
+        </button>
+        <button type="button" class="rounded border border-line px-3 py-1 text-sm text-forest" (click)="cancelClear()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <app-state-panel
+      state="loading"
+      [title]="'productSpecification.states.loading' | transloco"
+      [showRetry]="false"
+    />
+  } @else if (loadFailed()) {
+    <app-state-panel
+      state="error"
+      [title]="'productSpecification.errors.loadFailed' | transloco"
+      [message]="'productSpecification.errors.missingProduct' | transloco"
+      (retry)="load()"
+    />
+  } @else if (mode() === 'edit') {
+    <!-- ============================ EDIT ============================ -->
+    <form [formGroup]="form" class="space-y-6" (ngSubmit)="save()">
+      <section class="rounded-lg border border-line bg-surface p-4">
+        <h2 class="font-semibold text-forest">{{ 'productSpecification.sections.identity' | transloco }}</h2>
+
+        <div class="mt-3 grid gap-4 sm:grid-cols-2">
+          <div class="block">
+            <label class="pg-label" for="specification-brand">
+              {{ 'productSpecification.fields.brand' | transloco }}
+            </label>
+            <app-async-autocomplete
+              id="specification-brand"
+              formControlName="brandId"
+              [search]="brandSearch"
+              [minLength]="1"
+              [initialOption]="brandInitialOption()"
+              [placeholder]="'productSpecification.fields.brandPlaceholder' | transloco"
+              [testId]="'specification-brand'"
+            />
+            @if (fieldError('brandId'); as message) {
+              <span class="mt-1 block text-xs text-danger">{{ message }}</span>
+            }
+          </div>
+
+          <label class="block">
+            <span class="pg-label">{{ 'productSpecification.fields.model' | transloco }}</span>
+            <input
+              class="pg-input mt-1"
+              type="text"
+              formControlName="model"
+              [attr.placeholder]="'productSpecification.fields.modelPlaceholder' | transloco"
+              [attr.aria-invalid]="!!fieldError('model')"
+            />
+            @if (fieldError('model'); as message) {
+              <span class="mt-1 block text-xs text-danger">{{ message }}</span>
+            }
+          </label>
+        </div>
+      </section>
+
+      <!-- Measurements: one block per dimension, each with only the units that
+           dimension accepts, so an invalid pairing is not selectable. -->
+      <div formGroupName="measurements" class="space-y-6">
+        @for (field of measurementFields(); track field.key) {
+          <section class="rounded-lg border border-line bg-surface p-4" [formGroupName]="field.key">
+            <fieldset>
+              <legend class="font-semibold text-forest">{{ field.labelKey | transloco }}</legend>
+
+              <div class="mt-3 grid gap-4 sm:grid-cols-2">
+                <label class="block">
+                  <span class="pg-label">{{ 'productSpecification.fields.value' | transloco }}</span>
+                  <input
+                    class="pg-input mt-1"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    formControlName="value"
+                    [attr.data-testid]="'measurement-' + field.key + '-value'"
+                    [attr.aria-invalid]="!!measurementError(field.key)"
+                  />
+                </label>
+
+                <label class="block">
+                  <span class="pg-label">{{ 'productSpecification.fields.unit' | transloco }}</span>
+                  <select
+                    class="pg-input mt-1"
+                    formControlName="unitCode"
+                    [attr.data-testid]="'measurement-' + field.key + '-unit'"
+                    [attr.aria-invalid]="!!measurementError(field.key)"
+                  >
+                    <option value="">{{ 'common.selectOption' | transloco }}</option>
+                    @for (unit of field.units; track unit.code) {
+                      <option [value]="unit.code">
+                        {{ unit.name }} ({{ unit.symbol }}){{ unit.historical ? ' — ' + ('productSpecification.units.historical' | transloco) : '' }}
+                      </option>
+                    }
+                  </select>
+                </label>
+              </div>
+
+              @if (measurementError(field.key); as message) {
+                <p class="mt-2 text-xs text-danger">{{ message }}</p>
+              }
+              @if (pairError(field.key); as message) {
+                <p class="mt-2 text-xs text-danger">{{ message }}</p>
+              }
+            </fieldset>
+          </section>
+        }
+      </div>
+
+      <section class="space-y-4">
+        <h2 class="font-semibold text-forest">{{ 'productSpecification.sections.presentations' | transloco }}</h2>
+
+        <div formArrayName="presentations" class="space-y-4">
+          @for (presentation of presentations().controls; track presentation; let i = $index) {
+            <app-presentation-editor
+              [group]="asGroup(presentation)"
+              [index]="i"
+              [units]="countUnitsFor(i)"
+              (remove)="removePresentation(i)"
+            />
+          } @empty {
+            <p class="rounded-lg border border-line bg-surface p-4 text-sm text-olive">
+              {{ 'productSpecification.presentations.empty' | transloco }}
+            </p>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="rounded border border-line px-4 py-2 text-sm text-forest hover:border-forest"
+          data-testid="add-presentation"
+          (click)="addPresentation()"
+        >
+          {{ 'productSpecification.actions.addPresentation' | transloco }}
+        </button>
+      </section>
+
+      <section class="rounded-lg border border-line bg-surface p-4">
+        <h2 class="font-semibold text-forest">{{ 'productSpecification.sections.suppliers' | transloco }}</h2>
+        <div class="mt-3">
+          <app-supplier-picker formControlName="supplierIds" [assigned]="assignedSuppliers()" />
+        </div>
+        @if (fieldError('supplierIds'); as message) {
+          <p class="mt-2 text-xs text-danger">{{ message }}</p>
+        }
+      </section>
+    </form>
+  } @else {
+    <!-- ============================ VIEW ============================ -->
+    @if (aggregate(); as data) {
+      @if (!data.specification && data.presentations.length === 0 && data.suppliers.length === 0) {
+        <app-state-panel
+          state="empty"
+          [title]="'productSpecification.emptyTitle' | transloco"
+          [message]="'productSpecification.emptyMessage' | transloco"
+          [showRetry]="false"
+        />
+      } @else {
+        <div class="space-y-6">
+          <section class="rounded-lg border border-line bg-surface p-4">
+            <h2 class="font-semibold text-forest">{{ 'productSpecification.sections.identity' | transloco }}</h2>
+            <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <dt class="pg-label">{{ 'productSpecification.fields.brand' | transloco }}</dt>
+                <dd class="text-forest">
+                  {{ data.specification?.brandName ?? ('productSpecification.notCaptured' | transloco) }}
+                </dd>
+              </div>
+              <div>
+                <dt class="pg-label">{{ 'productSpecification.fields.model' | transloco }}</dt>
+                <dd class="text-forest">
+                  {{ data.specification?.model ?? ('productSpecification.notCaptured' | transloco) }}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="rounded-lg border border-line bg-surface p-4">
+            <h2 class="font-semibold text-forest">{{ 'productSpecification.sections.measurements' | transloco }}</h2>
+            <dl class="mt-3 grid gap-3 sm:grid-cols-3">
+              @for (field of measurementFields(); track field.key) {
+                <div>
+                  <dt class="pg-label">{{ field.labelKey | transloco }}</dt>
+                  <dd class="text-forest">
+                    {{ measurementText(measurementOf(field.key)) ?? ('productSpecification.notCaptured' | transloco) }}
+                  </dd>
+                </div>
+              }
+            </dl>
+          </section>
+
+          <section class="rounded-lg border border-line bg-surface p-4">
+            <h2 class="font-semibold text-forest">{{ 'productSpecification.sections.presentations' | transloco }}</h2>
+
+            <div class="mt-3 space-y-3">
+              @for (presentation of data.presentations; track presentation.id) {
+                <article class="rounded border border-line p-3">
+                  <header class="flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 class="font-medium text-forest">{{ presentation.name }}</h3>
+                    <p class="text-sm text-olive">
+                      {{ presentation.quantity }} · {{ unitLabel(presentation.unitCode) }}
+                    </p>
+                  </header>
+
+                  @if (presentation.identifiers.length > 0) {
+                    <ul class="mt-2 flex flex-wrap gap-2">
+                      @for (identifier of presentation.identifiers; track identifier.id) {
+                        <li class="rounded border border-line px-2 py-1 text-xs text-olive">
+                          <span class="font-medium text-forest">{{ identifierTypeKey(identifier.type) | transloco }}</span>
+                          {{ identifier.value }}
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="mt-2 text-xs text-olive">
+                      {{ 'productSpecification.presentations.identifiersEmpty' | transloco }}
+                    </p>
+                  }
+                </article>
+              } @empty {
+                <p class="text-sm text-olive">{{ 'productSpecification.presentations.empty' | transloco }}</p>
+              }
+            </div>
+          </section>
+
+          <section class="rounded-lg border border-line bg-surface p-4">
+            <h2 class="font-semibold text-forest">{{ 'productSpecification.sections.suppliers' | transloco }}</h2>
+            @if (data.suppliers.length > 0) {
+              <ul class="mt-3 flex flex-wrap gap-2">
+                @for (supplier of data.suppliers; track supplier.id) {
+                  <li class="rounded-full border border-line px-3 py-1 text-sm text-forest">{{ supplier.name }}</li>
+                }
+              </ul>
+            } @else {
+              <p class="mt-2 text-sm text-olive">{{ 'productSpecification.suppliers.empty' | transloco }}</p>
+            }
+          </section>
+        </div>
+      }
+    }
+  }
+</div>

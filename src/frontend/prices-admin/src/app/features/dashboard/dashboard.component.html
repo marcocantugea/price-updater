@@ -1,0 +1,187 @@
+<div class="space-y-6">
+  <!-- Header + quick actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-forest">{{ 'dashboard.title' | transloco }}</h1>
+      <p class="text-sm text-olive mt-1">
+        @if (session.activeTenantId()) {
+          {{ 'dashboard.subtitleWithTenant' | transloco }}
+        } @else {
+          {{ 'dashboard.subtitle' | transloco }}
+        }
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      <a
+        routerLink="/products"
+        class="px-4 py-2 bg-white border border-line text-forest rounded-lg text-sm font-medium shadow-sm hover:bg-sidebar transition-colors inline-flex items-center gap-2"
+      >
+        <lucide-icon name="plus" class="w-4 h-4"></lucide-icon> {{ 'dashboard.actions.newProduct' | transloco }}
+      </a>
+      <a
+        routerLink="/price-lists"
+        class="px-4 py-2 bg-white border border-line text-forest rounded-lg text-sm font-medium shadow-sm hover:bg-sidebar transition-colors inline-flex items-center gap-2"
+      >
+        <lucide-icon name="plus" class="w-4 h-4"></lucide-icon> {{ 'dashboard.actions.newPriceList' | transloco }}
+      </a>
+      <a
+        routerLink="/prices"
+        class="px-4 py-2 bg-forest text-white rounded-lg text-sm font-medium shadow-sm hover:bg-forest/90 transition-colors inline-flex items-center gap-2"
+      >
+        <lucide-icon name="trending-up" class="w-4 h-4"></lucide-icon> {{ 'dashboard.actions.uploadPrices' | transloco }}
+      </a>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <app-state-panel state="loading" [message]="'dashboard.loading' | transloco" />
+  } @else if (error()) {
+    <app-state-panel state="error" [message]="error()!" (retry)="load()" />
+  } @else {
+    <!-- Metric cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="pg-card p-5" data-testid="metric-products">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-active rounded-lg text-forest">
+            <lucide-icon name="package" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <h3 class="text-sm font-medium text-olive">{{ 'dashboard.metrics.activeProducts' | transloco }}</h3>
+        <p class="text-2xl font-bold text-forest mt-1">{{ summary()?.activeProducts ?? 0 }}</p>
+      </div>
+
+      <div class="pg-card p-5" data-testid="metric-marketplaces">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-positive/10 rounded-lg text-positive">
+            <lucide-icon name="store" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <h3 class="text-sm font-medium text-olive">{{ 'dashboard.metrics.marketplaces' | transloco }}</h3>
+        <p class="text-2xl font-bold text-forest mt-1">{{ summary()?.marketplaces ?? 0 }}</p>
+      </div>
+
+      <div class="pg-card p-5" data-testid="metric-price-lists">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-contrast/10 rounded-lg text-contrast">
+            <lucide-icon name="tags" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <h3 class="text-sm font-medium text-olive">{{ 'dashboard.metrics.priceLists' | transloco }}</h3>
+        <p class="text-2xl font-bold text-forest mt-1">{{ summary()?.priceLists ?? 0 }}</p>
+      </div>
+
+      <div class="pg-card p-5" data-testid="metric-prices">
+        <div class="flex justify-between items-start mb-4">
+          <div class="p-2 bg-active rounded-lg text-forest">
+            <lucide-icon name="trending-up" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <h3 class="text-sm font-medium text-olive">{{ 'dashboard.metrics.activePrices' | transloco }}</h3>
+        <p class="text-2xl font-bold text-forest mt-1">{{ summary()?.activePrices ?? 0 }}</p>
+      </div>
+    </div>
+
+    <!-- Expiring discount alerts -->
+    @if (expiringCount() > 0) {
+      <div class="pg-card p-5 border-contrast/40" data-testid="expiring-alerts">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="p-2 bg-contrast/10 rounded-lg text-contrast">
+            <lucide-icon name="triangle-alert" class="w-4 h-4"></lucide-icon>
+          </div>
+          <h2 class="text-sm font-semibold text-forest">
+            {{ 'dashboard.alerts.expiringTitle' | transloco: { days: summary()?.expiringWindowDays } }}
+          </h2>
+        </div>
+        <ul class="divide-y divide-line/60">
+          @for (discount of summary()?.expiringDiscounts ?? []; track discount.id) {
+            <li class="py-2.5 flex items-center justify-between gap-4 text-sm">
+              <span class="font-medium text-forest">{{ discount.name }}</span>
+              <span class="text-olive text-xs">
+                {{
+                  'dashboard.alerts.expiresOn'
+                    | transloco
+                      : {
+                          date: (discount.endDate | appDate: false : true),
+                          value: (discount.type === 'percentage' ? discount.value + '%' : (discount.value | money))
+                        }
+                }}
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Recent prices + chart -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 pg-card overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-line flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-forest">{{ 'dashboard.recent.title' | transloco }}</h2>
+          <a routerLink="/prices" class="text-sm text-olive hover:text-forest font-medium">{{ 'dashboard.recent.viewAll' | transloco }}</a>
+        </div>
+
+        @if (recentPrices().length === 0) {
+          <div class="p-6 text-sm text-olive">{{ 'dashboard.recent.empty' | transloco }}</div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-olive" data-testid="recent-prices-table">
+              <thead class="bg-sidebar/60 text-xs uppercase font-semibold text-forest">
+                <tr>
+                  <th class="px-5 py-3">{{ 'dashboard.recent.columns.product' | transloco }}</th>
+                  <th class="px-5 py-3">{{ 'dashboard.recent.columns.priceList' | transloco }}</th>
+                  <th class="px-5 py-3">{{ 'dashboard.recent.columns.marketplace' | transloco }}</th>
+                  <th class="px-5 py-3 text-right">{{ 'dashboard.recent.columns.basePrice' | transloco }}</th>
+                  <th class="px-5 py-3 text-right">{{ 'dashboard.recent.columns.finalPrice' | transloco }}</th>
+                  <th class="px-5 py-3">{{ 'dashboard.recent.columns.status' | transloco }}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-line/60">
+                @for (price of recentPrices(); track price.id) {
+                  <tr class="hover:bg-sidebar/30 transition-colors">
+                    <td class="px-5 py-3">
+                      <p class="font-medium text-forest">{{ price.product?.name ?? '—' }}</p>
+                      <p class="text-xs">{{ price.product?.sku ?? '' }}</p>
+                    </td>
+                    <td class="px-5 py-3">{{ price.priceList?.name ?? '—' }}</td>
+                    <td class="px-5 py-3">{{ price.marketplace?.name ?? '—' }}</td>
+                    <td class="px-5 py-3 text-right">{{ price.basePrice | money: price.currencyCode }}</td>
+                    <td class="px-5 py-3 text-right font-medium text-forest">
+                      {{ price.finalPrice | money: price.currencyCode }}
+                    </td>
+                    <td class="px-5 py-3"><app-status-badge [value]="price.status" /></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="pg-card p-5 flex flex-col">
+        <h2 class="text-lg font-semibold text-forest mb-1">{{ 'dashboard.chart.title' | transloco }}</h2>
+        <p class="text-xs text-olive mb-4">{{ 'dashboard.chart.subtitle' | transloco }}</p>
+
+        @if (chart().length === 0) {
+          <div class="flex-1 flex items-center justify-center text-sm text-olive py-8">
+            {{ 'dashboard.chart.empty' | transloco }}
+          </div>
+        } @else {
+          <div class="flex-1 h-56" data-testid="chart">
+            <ngx-charts-bar-vertical
+              [results]="chartData()"
+              [scheme]="chartScheme"
+              [xAxis]="true"
+              [yAxis]="true"
+              [showXAxisLabel]="false"
+              [showYAxisLabel]="false"
+              [showDataLabel]="true"
+              [roundDomains]="true"
+              [animations]="false"
+            ></ngx-charts-bar-vertical>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

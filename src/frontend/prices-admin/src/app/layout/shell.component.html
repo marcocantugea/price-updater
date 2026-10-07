@@ -1,0 +1,161 @@
+<div class="h-screen w-full p-3 md:p-5 lg:p-8 flex box-border">
+  <div class="w-full h-full max-w-[1600px] mx-auto bg-surface rounded-2xl shadow-app flex overflow-hidden border border-white/10 relative">
+    <!-- Sidebar -->
+    <aside
+      class="w-64 bg-sidebar border-r border-line flex-col flex-shrink-0 z-20 absolute md:relative h-full transition-transform duration-200 md:translate-x-0"
+      [class.-translate-x-full]="!sidebarOpen()"
+      data-testid="sidebar"
+    >
+      <div class="h-16 flex items-center justify-between px-6 border-b border-line">
+        <button
+          type="button"
+          class="md:hidden text-olive"
+          (click)="closeSidebar()"
+          [attr.aria-label]="'shell.menu.close' | transloco"
+        >
+          <lucide-icon name="x" class="w-5 h-5"></lucide-icon>
+        </button>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto py-5 px-4 space-y-1.5" data-testid="sidebar-nav">
+        @for (item of navItems(); track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="bg-active text-forest"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="flex items-center gap-3 px-3 py-2.5 text-olive hover:bg-active/60 hover:text-forest rounded-lg font-medium text-sm transition-colors"
+            (click)="closeSidebar()"
+          >
+            <lucide-icon [name]="item.icon" class="w-4 h-4"></lucide-icon>
+            <span>{{ item.labelKey | transloco }}</span>
+          </a>
+        }
+      </nav>
+
+      <div class="px-5 py-4 border-t border-line text-xs text-olive">
+        <p class="font-medium text-forest">{{ userName() || ('shell.user.guest' | transloco) }}</p>
+        <p class="truncate">{{ session.user()?.email }}</p>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-surface relative">
+      <header class="h-16 bg-header border-b border-line flex items-center justify-between px-4 lg:px-8 flex-shrink-0 z-10">
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="md:hidden text-forest"
+            (click)="toggleSidebar()"
+            [attr.aria-label]="'shell.menu.open' | transloco"
+          >
+            <lucide-icon name="menu" class="w-6 h-6"></lucide-icon>
+          </button>
+
+          <div class="hidden md:block relative">
+            <lucide-icon
+              name="search"
+              class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-olive"
+            ></lucide-icon>
+            <input
+              type="text"
+              [placeholder]="'shell.search.placeholder' | transloco"
+              class="pl-9 pr-4 py-1.5 bg-white/60 border border-line/60 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-forest focus:bg-white transition-all w-64"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 text-forest">
+          @if (session.isGlobalAdmin()) {
+            <label class="hidden sm:flex items-center gap-2 text-xs text-olive">
+              <span class="hidden lg:inline">{{ 'shell.company.label' | transloco }}</span>
+              <select
+                class="rounded-lg border border-line bg-white/70 px-2 py-1.5 text-xs font-medium text-forest focus:outline-none focus:ring-2 focus:ring-forest"
+                [value]="session.activeTenantId() ?? ''"
+                (change)="onTenantChange($any($event.target).value)"
+                data-testid="company-selector"
+              >
+                <option value="">{{ 'shell.company.select' | transloco }}</option>
+                @for (tenant of tenants(); track tenant.id) {
+                  <option [value]="tenant.id">{{ tenant.commercialName }}</option>
+                }
+              </select>
+            </label>
+          }
+
+          <button
+            type="button"
+            class="p-1 rounded-full hover:bg-active/50 transition-colors"
+            [attr.aria-label]="'shell.notifications' | transloco"
+          >
+            <lucide-icon name="bell" class="w-5 h-5"></lucide-icon>
+          </button>
+          <button
+            type="button"
+            class="hidden sm:block p-1 rounded-full hover:bg-active/50 transition-colors"
+            [attr.aria-label]="'shell.help' | transloco"
+          >
+            <lucide-icon name="circle-help" class="w-5 h-5"></lucide-icon>
+          </button>
+
+          <div class="w-px h-6 bg-line"></div>
+
+          <!-- Visible for every role, with or without a selected company. -->
+          <app-language-selector
+            [activeLocale]="language.activeLocale()"
+            [saving]="savingLanguage()"
+            [labelClass]="languageLabelClass()"
+            (localeSelected)="changeLanguage($event)"
+          />
+
+          <div class="w-px h-6 bg-line"></div>
+
+          <div class="relative">
+            <button
+              type="button"
+              class="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              (click)="toggleUserMenu()"
+              data-testid="user-menu-button"
+            >
+              <div class="w-8 h-8 rounded-full bg-forest text-surface flex items-center justify-center text-xs font-semibold shadow-sm">
+                {{ initials() }}
+              </div>
+              <span class="text-sm font-medium hidden sm:block">{{ userName() }}</span>
+              <lucide-icon name="chevron-down" class="w-4 h-4 text-olive"></lucide-icon>
+            </button>
+
+            @if (userMenuOpen()) {
+              <div
+                class="absolute right-0 mt-2 w-56 bg-surface border border-line rounded-xl shadow-app py-2 z-30"
+                data-testid="user-menu"
+              >
+                <div class="px-4 py-2 border-b border-line">
+                  <p class="text-sm font-medium text-forest truncate">{{ session.user()?.email }}</p>
+                  <p class="text-xs text-olive mt-0.5">
+                    {{ session.isGlobalAdmin() ? ('shell.user.globalAdmin' | transloco) : userRole() }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-danger hover:bg-danger/10 transition-colors"
+                  (click)="logout()"
+                  data-testid="logout-button"
+                >
+                  <lucide-icon name="log-out" class="w-4 h-4"></lucide-icon>
+                  {{ 'shell.user.logout' | transloco }}
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+        <div class="max-w-6xl mx-auto">
+          <router-outlet></router-outlet>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <app-toast-host></app-toast-host>
+</div>

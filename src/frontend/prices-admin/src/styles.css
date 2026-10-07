@@ -1,0 +1,66 @@
+/*
+ * Must stay ahead of the Tailwind directives: the CDK overlay container needs
+ * its base positioning rules before the utility layers are emitted. The
+ * autocomplete suggestion panel is the only consumer.
+ */
+@import '@angular/cdk/overlay-prebuilt.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Price Updater design tokens — see tailwind.config.js                 */
+/* ------------------------------------------------------------------ */
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #707a68;
+  color: #314534;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #dde4d2;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #66745c;
+}
+
+@layer components {
+  .pg-card {
+    @apply bg-white rounded-xl border border-line shadow-soft;
+  }
+
+  .pg-label {
+    @apply block text-sm font-medium text-forest mb-1.5;
+  }
+
+  .pg-input {
+    @apply w-full rounded-md border border-line bg-[#FCFDF9] px-3.5 py-2.5 text-sm text-forest
+      placeholder:text-olive/50 shadow-sm transition-all
+      focus:outline-none focus:ring-2 focus:ring-forest focus:border-transparent
+      disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .pg-input-invalid {
+    @apply border-danger focus:ring-danger;
+  }
+}

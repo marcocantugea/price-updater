@@ -1,0 +1,821 @@
+// Price Updater — Prisma schema (MySQL, multi-tenant, single shared database)
+// Migrations own the STRUCTURE; seeds own the initial DATA (see prisma/seed).
+// The physical database keeps its historical `pricesgrid` name (see README).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ActorType {
+  user
+  api_key
+  system
+}
+
+enum RecordStatus {
+  active
+  inactive
+}
+
+enum ApiKeyStatus {
+  active
+  revoked
+}
+
+enum MarketplaceCode {
+  amazon
+  mercadolibre
+  own_store
+}
+
+enum DiscountType {
+  percentage
+  fixed
+}
+
+enum DiscountScope {
+  product
+  price_list
+  marketplace
+}
+
+enum ExportFormat {
+  csv
+  json
+  txt
+}
+
+enum ExportStatus {
+  queued
+  processing
+  completed
+  failed
+  expired
+}
+
+/// Physical dimension a unit of measure belongs to. Weight accepts only `mass`,
+/// Length/Depth only `length`, and presentation quantity only `count`; the
+/// service enforces the match and the API returns `UNIT_DIMENSION_MISMATCH`
+/// otherwise. No automatic conversion between units is performed.
+enum UnitDimension {
+  count
+  mass
+  length
+}
+
+/// Supported product identifier symbologies. `value` is stored as a string so
+/// leading zeroes survive, and `normalizedValue` holds the GTIN-14 form used for
+/// tenant-wide uniqueness.
+enum IdentifierType {
+  ean_8
+  ean_13
+  upc_a
+  upc_e
+}
+
+// ---------------------------------------------------------------------------
+// Global catalogs
+// ---------------------------------------------------------------------------
+
+model Currency {
+  id       String       @id @default(uuid()) @db.VarChar(36)
+  code     String       @unique @db.Char(3)
+  name     String       @db.VarChar(100)
+  symbol   String       @db.VarChar(10)
+  decimals Int          @default(2)
+  status   RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenants    Tenant[]
+  products   Product[]
+  prices     Price[]
+  priceLists PriceList[]
+
+  @@map("currencies")
+}
+
+/// Global reference catalog of units of measure, administrable by a global
+/// administrator only: a unit is shared by every company. `code` is immutable
+/// once the row exists and business tables reference it by foreign key, so a
+/// used unit cannot be re-dimensioned and its `decimals` cannot be lowered below
+/// what stored values need. Deletion is a soft delete that keeps references
+/// resolving.
+///
+/// Shaped like `Currency` on purpose: a UUID `id` primary key plus a unique
+/// short `code`, with business tables referencing the `code` rather than the
+/// surrogate key — exactly as `products.currency_code` references
+/// `currencies.code`. Codes are stable (`EA`, `KG`, `G`, `LB`, `OZ`, `M`, `CM`,
+/// `MM`, `IN`, `FT`) and the UI translates labels by code.
+model UnitOfMeasure {
+  id        String        @id @default(uuid()) @db.VarChar(36)
+  code      String        @unique @db.VarChar(8)
+  name      String        @db.VarChar(100)
+  symbol    String        @db.VarChar(10)
+  dimension UnitDimension
+  /// Allowed decimal scale for values expressed in this unit.
+  decimals  Int           @default(0)
+  status    RecordStatus  @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  presentations        ProductPresentation[]
+  weightSpecifications ProductSpecification[] @relation("SpecificationWeightUnit")
+  lengthSpecifications ProductSpecification[] @relation("SpecificationLengthUnit")
+  depthSpecifications  ProductSpecification[] @relation("SpecificationDepthUnit")
+
+  @@map("unit_of_measures")
+}
+
+model Permission {
+  id          String  @id @default(uuid()) @db.VarChar(36)
+  name        String  @db.VarChar(150)
+  slug        String  @unique @db.VarChar(100)
+  description String? @db.VarChar(255)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+// ---------------------------------------------------------------------------
+// Tenants (companies)
+// ---------------------------------------------------------------------------
+
+model Tenant {
+  id              String       @id @default(uuid()) @db.VarChar(36)
+  commercialName  String       @map("commercial_name") @db.VarChar(150)
+  legalName       String       @map("legal_name") @db.VarChar(200)
+  slug            String       @unique @db.VarChar(100)
+  status          RecordStatus @default(active)
+  defaultCurrency String       @map("default_currency") @db.Char(3)
+  timeZone        String       @default("UTC") @map("time_zone") @db.VarChar(64)
+  notes           String?      @db.Text
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  currency              Currency               @relation(fields: [defaultCurrency], references: [code])
+  users                 User[]
+  roles                 Role[]
+  apiKeys               ApiKey[]
+  products              Product[]
+  marketplaces          Marketplace[]
+  priceLists            PriceList[]
+  priceListProducts     PriceListProduct[]
+  priceListMarketplaces PriceListMarketplace[]
+  userPriceListAccess   UserPriceListAccess[]
+  exportRequests        ExportRequest[]
+  prices                Price[]
+  discounts             Discount[]
+  priceHistory          PriceHistory[]
+  brands                Brand[]
+  productSpecifications ProductSpecification[]
+  productPresentations  ProductPresentation[]
+  productIdentifiers    ProductIdentifier[]
+  productSuppliers      ProductSupplier[]
+
+  @@map("tenants")
+}
+
+// ---------------------------------------------------------------------------
+// Access control
+// ---------------------------------------------------------------------------
+
+model Role {
+  id          String       @id @default(uuid()) @db.VarChar(36)
+  tenantId    String?      @map("tenant_id") @db.VarChar(36)
+  name        String       @db.VarChar(100)
+  slug        String       @db.VarChar(100)
+  description String?      @db.VarChar(255)
+  isSystem    Boolean      @default(false) @map("is_system")
+  status      RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@map("roles")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.VarChar(36)
+  permissionId String @map("permission_id") @db.VarChar(36)
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id              String       @id @default(uuid()) @db.VarChar(36)
+  tenantId        String?      @map("tenant_id") @db.VarChar(36)
+  name            String       @db.VarChar(150)
+  email           String       @unique @db.VarChar(190)
+  passwordHash    String       @map("password_hash") @db.VarChar(255)
+  roleId          String       @map("role_id") @db.VarChar(36)
+  status          RecordStatus @default(active)
+  /// Per-user UI language. VARCHAR + application allowlist, not a DB enum, so a
+  /// new locale never requires a migration. Belongs to the user, not the tenant.
+  preferredLocale String       @default("es-419") @map("preferred_locale") @db.VarChar(16)
+  lastLoginAt     DateTime?    @map("last_login_at") @db.DateTime(3)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant          Tenant?               @relation(fields: [tenantId], references: [id])
+  role            Role                  @relation(fields: [roleId], references: [id])
+  refreshTokens   RefreshToken[]
+  priceListAccess UserPriceListAccess[]
+  exportRequests  ExportRequest[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid()) @db.VarChar(36)
+  userId       String    @map("user_id") @db.VarChar(36)
+  tokenHash    String    @unique @map("token_hash") @db.VarChar(255)
+  expiresAt    DateTime  @map("expires_at") @db.DateTime(3)
+  revokedAt    DateTime? @map("revoked_at") @db.DateTime(3)
+  replacedById String?   @map("replaced_by_id") @db.VarChar(36)
+  userAgent    String?   @map("user_agent") @db.VarChar(255)
+  ip           String?   @db.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model ApiKey {
+  id         String       @id @default(uuid()) @db.VarChar(36)
+  tenantId   String       @map("tenant_id") @db.VarChar(36)
+  name       String       @db.VarChar(150)
+  keyHash    String       @map("key_hash") @db.VarChar(255)
+  prefix     String       @db.VarChar(16)
+  scopes     Json
+  status     ApiKeyStatus @default(active)
+  expiresAt  DateTime?    @map("expires_at") @db.DateTime(3)
+  revokedAt  DateTime?    @map("revoked_at") @db.DateTime(3)
+  lastUsedAt DateTime?    @map("last_used_at") @db.DateTime(3)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@map("api_keys")
+}
+
+// ---------------------------------------------------------------------------
+// Business entities (tenant-scoped)
+// ---------------------------------------------------------------------------
+
+model Product {
+  id           String       @id @default(uuid()) @db.VarChar(36)
+  tenantId     String       @map("tenant_id") @db.VarChar(36)
+  sku          String       @db.VarChar(64)
+  name         String       @db.VarChar(200)
+  description  String?      @db.Text
+  basePrice    Decimal      @map("base_price") @db.Decimal(12, 2)
+  /// Current cost of one complete product record, in `currencyCode`.
+  /// NULL means "cost not captured" and is NEVER equivalent to 0. No history
+  /// table and no cross-currency conversion: a currency change reinterprets
+  /// both `basePrice` and `cost`. A CHECK constraint enforces non-negativity at
+  /// the database level (see the add_product_cost migration).
+  cost         Decimal?     @db.Decimal(12, 2)
+  currencyCode String       @map("currency_code") @db.Char(3)
+  status       RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id])
+  currency          Currency           @relation(fields: [currencyCode], references: [code])
+  prices            Price[]
+  priceListProducts PriceListProduct[]
+  discounts         Discount[]
+  priceHistory      PriceHistory[]
+  specification     ProductSpecification?
+  presentations     ProductPresentation[]
+  productSuppliers  ProductSupplier[]
+
+  @@unique([tenantId, sku])
+  // Enables composite (tenant-safe) foreign keys from Price / PriceHistory.
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("products")
+}
+
+model Marketplace {
+  id       String          @id @default(uuid()) @db.VarChar(36)
+  tenantId String          @map("tenant_id") @db.VarChar(36)
+  name     String          @db.VarChar(150)
+  code     MarketplaceCode
+  config   Json?
+  status   RecordStatus    @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id])
+  prices                Price[]
+  priceListMarketplaces PriceListMarketplace[]
+  discounts             Discount[]
+  exportRequests        ExportRequest[]
+
+  @@unique([tenantId, code])
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("marketplaces")
+}
+
+model PriceList {
+  id           String       @id @default(uuid()) @db.VarChar(36)
+  tenantId     String       @map("tenant_id") @db.VarChar(36)
+  name         String       @db.VarChar(150)
+  description  String?      @db.VarChar(255)
+  currencyCode String?      @map("currency_code") @db.Char(3)
+  status       RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id])
+  currency              Currency?              @relation(fields: [currencyCode], references: [code])
+  prices                Price[]
+  priceListProducts     PriceListProduct[]
+  priceListMarketplaces PriceListMarketplace[]
+  discounts             Discount[]
+  userAccess            UserPriceListAccess[]
+  exportRequests        ExportRequest[]
+
+  @@unique([tenantId, name])
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("price_lists")
+}
+
+model PriceListProduct {
+  tenantId    String @map("tenant_id") @db.VarChar(36)
+  priceListId String @map("price_list_id") @db.VarChar(36)
+  productId   String @map("product_id") @db.VarChar(36)
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  priceList PriceList @relation(fields: [tenantId, priceListId], references: [tenantId, id], onDelete: Cascade)
+  product   Product   @relation(fields: [tenantId, productId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, priceListId, productId])
+  @@index([tenantId, productId])
+  @@map("price_list_products")
+}
+
+model PriceListMarketplace {
+  tenantId      String @map("tenant_id") @db.VarChar(36)
+  priceListId   String @map("price_list_id") @db.VarChar(36)
+  marketplaceId String @map("marketplace_id") @db.VarChar(36)
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  priceList   PriceList   @relation(fields: [tenantId, priceListId], references: [tenantId, id], onDelete: Cascade)
+  marketplace Marketplace @relation(fields: [tenantId, marketplaceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, priceListId, marketplaceId])
+  @@index([tenantId, marketplaceId])
+  @@map("price_list_marketplaces")
+}
+
+model Price {
+  id            String       @id @default(uuid()) @db.VarChar(36)
+  tenantId      String       @map("tenant_id") @db.VarChar(36)
+  productId     String       @map("product_id") @db.VarChar(36)
+  priceListId   String       @map("price_list_id") @db.VarChar(36)
+  marketplaceId String       @map("marketplace_id") @db.VarChar(36)
+  basePrice     Decimal      @map("base_price") @db.Decimal(12, 2)
+  currencyCode  String       @map("currency_code") @db.Char(3)
+  finalPrice    Decimal      @map("final_price") @db.Decimal(12, 2)
+  startDate     DateTime     @map("start_date") @db.Date
+  endDate       DateTime?    @map("end_date") @db.Date
+  status        RecordStatus @default(active)
+  notes         String?      @db.Text
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  // Composite foreign keys keep the product, price list and marketplace inside
+  // the same tenant at the database level (defense in depth, alongside the
+  // service-level validation).
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  product     Product        @relation(fields: [tenantId, productId], references: [tenantId, id])
+  priceList   PriceList      @relation(fields: [tenantId, priceListId], references: [tenantId, id])
+  marketplace Marketplace    @relation(fields: [tenantId, marketplaceId], references: [tenantId, id])
+  currency    Currency       @relation(fields: [currencyCode], references: [code])
+  history     PriceHistory[]
+
+  @@unique([tenantId, productId, priceListId, marketplaceId, startDate])
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@index([tenantId, productId])
+  @@map("prices")
+}
+
+model PriceHistory {
+  id            String    @id @default(uuid()) @db.VarChar(36)
+  tenantId      String    @map("tenant_id") @db.VarChar(36)
+  priceId       String    @map("price_id") @db.VarChar(36)
+  productId     String    @map("product_id") @db.VarChar(36)
+  oldBasePrice  Decimal?  @map("old_base_price") @db.Decimal(12, 2)
+  newBasePrice  Decimal?  @map("new_base_price") @db.Decimal(12, 2)
+  oldFinalPrice Decimal?  @map("old_final_price") @db.Decimal(12, 2)
+  newFinalPrice Decimal?  @map("new_final_price") @db.Decimal(12, 2)
+  changedByType ActorType @map("changed_by_type")
+  changedById   String?   @map("changed_by_id") @db.VarChar(36)
+  reason        String    @db.VarChar(40)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  price   Price   @relation(fields: [tenantId, priceId], references: [tenantId, id], onDelete: Cascade)
+  product Product @relation(fields: [tenantId, productId], references: [tenantId, id])
+
+  @@index([tenantId])
+  @@index([tenantId, priceId])
+  @@map("price_history")
+}
+
+model Discount {
+  id            String        @id @default(uuid()) @db.VarChar(36)
+  tenantId      String        @map("tenant_id") @db.VarChar(36)
+  name          String        @db.VarChar(150)
+  type          DiscountType
+  value         Decimal       @db.Decimal(12, 2)
+  appliesTo     DiscountScope @map("applies_to")
+  productId     String?       @map("product_id") @db.VarChar(36)
+  priceListId   String?       @map("price_list_id") @db.VarChar(36)
+  marketplaceId String?       @map("marketplace_id") @db.VarChar(36)
+  startDate     DateTime      @map("start_date") @db.Date
+  endDate       DateTime?     @map("end_date") @db.Date
+  priority      Int           @default(100)
+  status        RecordStatus  @default(active)
+  description   String?       @db.Text
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  product     Product?     @relation(fields: [productId], references: [id])
+  priceList   PriceList?   @relation(fields: [priceListId], references: [id])
+  marketplace Marketplace? @relation(fields: [marketplaceId], references: [id])
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("discounts")
+}
+
+model UserPriceListAccess {
+  tenantId      String     @map("tenant_id") @db.VarChar(36)
+  userId        String     @map("user_id") @db.VarChar(36)
+  priceListId   String     @map("price_list_id") @db.VarChar(36)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [tenantId, userId], references: [tenantId, id], onDelete: Cascade)
+  priceList PriceList @relation(fields: [tenantId, priceListId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, userId, priceListId])
+  @@index([tenantId, userId])
+  @@index([tenantId, priceListId])
+  @@map("user_price_list_access")
+}
+
+model ExportRequest {
+  id                String       @id @default(uuid()) @db.VarChar(36)
+  tenantId          String       @map("tenant_id") @db.VarChar(36)
+  requestedByUserId String       @map("requested_by_user_id") @db.VarChar(36)
+  priceListId       String       @map("price_list_id") @db.VarChar(36)
+  marketplaceId     String       @map("marketplace_id") @db.VarChar(36)
+  format            ExportFormat
+  filters           Json?
+  status            ExportStatus @default(queued)
+  attemptCount      Int          @default(0) @map("attempt_count")
+  maxAttempts       Int          @default(3) @map("max_attempts")
+  lockedAt          DateTime?    @map("locked_at") @db.DateTime(3)
+  lockedBy          String?      @map("locked_by") @db.VarChar(100)
+  startedAt         DateTime?    @map("started_at") @db.DateTime(3)
+  completedAt       DateTime?    @map("completed_at") @db.DateTime(3)
+  expiresAt         DateTime?    @map("expires_at") @db.DateTime(3)
+  storageKey        String?      @map("storage_key") @db.VarChar(500)
+  fileName          String?      @map("file_name") @db.VarChar(255)
+  contentType       String?      @map("content_type") @db.VarChar(120)
+  byteSize          Int?         @map("byte_size")
+  checksum          String?      @db.VarChar(128)
+  errorCode         String?      @map("error_code") @db.VarChar(80)
+  errorMessage      String?      @map("error_message") @db.VarChar(1000)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
+  createdBy         String?      @map("created_by") @db.VarChar(36)
+  createdByType     ActorType?   @map("created_by_type")
+
+  tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requestedByUser User        @relation(fields: [tenantId, requestedByUserId], references: [tenantId, id], onDelete: Cascade)
+  priceList       PriceList   @relation(fields: [tenantId, priceListId], references: [tenantId, id], onDelete: Cascade)
+  marketplace     Marketplace @relation(fields: [tenantId, marketplaceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([tenantId, requestedByUserId, createdAt])
+  @@index([expiresAt])
+  @@map("export_requests")
+}
+
+// ---------------------------------------------------------------------------
+// Product specifications (tenant-scoped)
+//
+// The specification is the aggregate root child of `Product`: zero or one
+// specification, zero or many presentations (each with identifiers), and a
+// many-to-many set of suppliers. Every business foreign key carries `tenant_id`
+// so the database itself rejects cross-tenant references, in addition to the
+// service-level ownership checks.
+// ---------------------------------------------------------------------------
+
+model Brand {
+  id       String       @id @default(uuid()) @db.VarChar(36)
+  tenantId String       @map("tenant_id") @db.VarChar(36)
+  name     String       @db.VarChar(150)
+  status   RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant         Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  specifications ProductSpecification[]
+
+  @@unique([tenantId, name])
+  // Enables the composite (tenant-safe) foreign key from ProductSpecification.
+  @@unique([tenantId, id])
+  @@index([tenantId])
+  @@map("brands")
+}
+
+/// Global supplier catalog, shared by every company, like `unit_of_measures`.
+///
+/// Deliberately without `tenant_id`: a supplier is a commercial counterpart that
+/// every company can use, and a global administrator is the only one who creates,
+/// renames or deactivates one. The link to a product (`ProductSupplier`) *is*
+/// tenant-scoped, because the product belongs to a company.
+///
+/// `name` is unique globally **including soft-deleted rows**, exactly like a unit
+/// code: that is what keeps "creating a deleted name revives that row" and the
+/// field-level duplicate conflict honest. MySQL has no partial indexes, so the
+/// plain unique key is what covers deleted rows for free.
+model Supplier {
+  id     String       @id @default(uuid()) @db.VarChar(36)
+  name   String       @unique @db.VarChar(150)
+  status RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  productLinks ProductSupplier[]
+
+  @@map("suppliers")
+}
+
+/// Zero or one per product. Measurements are "not captured" when both the value
+/// and its unit are NULL; `null` never means zero. The migration adds CHECK
+/// constraints for positive values and for complete value/unit pairs, since
+/// Prisma cannot express them (see the add_product_cost migration note).
+model ProductSpecification {
+  id             String       @id @default(uuid()) @db.VarChar(36)
+  tenantId       String       @map("tenant_id") @db.VarChar(36)
+  productId      String       @map("product_id") @db.VarChar(36)
+  brandId        String?      @map("brand_id") @db.VarChar(36)
+  model          String?      @db.VarChar(150)
+  weight         Decimal?     @db.Decimal(12, 3)
+  weightUnitCode String?      @map("weight_unit_code") @db.VarChar(8)
+  length         Decimal?     @db.Decimal(12, 3)
+  lengthUnitCode String?      @map("length_unit_code") @db.VarChar(8)
+  depth          Decimal?     @db.Decimal(12, 3)
+  depthUnitCode  String?      @map("depth_unit_code") @db.VarChar(8)
+  status         RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant     Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  product    Product        @relation(fields: [tenantId, productId], references: [tenantId, id], onDelete: Restrict)
+  // Explicit Restrict: a composite foreign key where `tenant_id` is NOT NULL
+  // cannot use Prisma's default SET NULL for optional relations — MySQL rejects
+  // "ON DELETE SET NULL" on a NOT NULL column. Brands are soft-deleted anyway,
+  // and soft-deleting one must not detach historical specifications.
+  brand      Brand?         @relation(fields: [tenantId, brandId], references: [tenantId, id], onDelete: Restrict)
+  // onUpdate: Restrict (not Prisma's CASCADE default) on these three only:
+  // MySQL forbids a referential action on a column that a CHECK constraint uses
+  // (error 3823), and the value/unit pair checks below read `*_unit_code`. Unit
+  // codes are immutable, so RESTRICT costs nothing.
+  weightUnit UnitOfMeasure? @relation("SpecificationWeightUnit", fields: [weightUnitCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  lengthUnit UnitOfMeasure? @relation("SpecificationLengthUnit", fields: [lengthUnitCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  depthUnit  UnitOfMeasure? @relation("SpecificationDepthUnit", fields: [depthUnitCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([tenantId, productId])
+  @@index([tenantId])
+  // One index per foreign key column set: MySQL creates these automatically when
+  // they are missing, which would produce names Prisma cannot predict. Declaring
+  // them keeps the migration and the schema in agreement.
+  @@index([tenantId, brandId])
+  @@index([weightUnitCode])
+  @@index([lengthUnitCode])
+  @@index([depthUnitCode])
+  @@map("product_specifications")
+}
+
+/// Multi-record. There is deliberately no permanent unique constraint on the
+/// presentation name: it would block recreating a soft-deleted row. The service
+/// rejects an active duplicate name instead, using the active-row index below.
+model ProductPresentation {
+  id        String       @id @default(uuid()) @db.VarChar(36)
+  tenantId  String       @map("tenant_id") @db.VarChar(36)
+  productId String       @map("product_id") @db.VarChar(36)
+  name      String       @db.VarChar(150)
+  quantity  Decimal      @db.Decimal(12, 3)
+  unitCode  String       @map("unit_code") @db.VarChar(8)
+  status    RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant      Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  product     Product             @relation(fields: [tenantId, productId], references: [tenantId, id], onDelete: Restrict)
+  unit        UnitOfMeasure       @relation(fields: [unitCode], references: [code], onDelete: Restrict)
+  identifiers ProductIdentifier[]
+
+  // Active-row lookup and the target the identifier's composite FK needs.
+  @@index([tenantId, productId, deletedAt])
+  @@index([unitCode])
+  @@unique([tenantId, productId, id])
+  @@map("product_presentations")
+}
+
+/// Multi-record per presentation. `value` keeps the digits exactly as entered
+/// (leading zeroes included); `normalizedValue` is the left-padded GTIN-14 used
+/// for the tenant-wide unique constraint. Soft deletion deliberately does NOT
+/// release a barcode, so the constraint covers deleted rows too — MySQL has no
+/// partial indexes, which gives that behaviour for free.
+model ProductIdentifier {
+  id              String         @id @default(uuid()) @db.VarChar(36)
+  tenantId        String         @map("tenant_id") @db.VarChar(36)
+  productId       String         @map("product_id") @db.VarChar(36)
+  presentationId  String         @map("presentation_id") @db.VarChar(36)
+  type            IdentifierType
+  value           String         @db.VarChar(14)
+  normalizedValue String         @map("normalized_value") @db.VarChar(14)
+  status          RecordStatus   @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  // The identifier is a strict child of its presentation, like PriceHistory is
+  // of Price, so it cascades rather than blocking a hard delete.
+  presentation ProductPresentation @relation(fields: [tenantId, productId, presentationId], references: [tenantId, productId, id], onDelete: Cascade)
+
+  @@unique([tenantId, normalizedValue])
+  @@index([tenantId, productId, presentationId])
+  @@map("product_identifiers")
+}
+
+/// Join between Product and Supplier. The primary key is the natural triple, so
+/// a re-assignment revives the existing soft-deleted row instead of inserting a
+/// duplicate. Supplier cost, SKU, and lead time are deliberately out of scope.
+model ProductSupplier {
+  tenantId   String       @map("tenant_id") @db.VarChar(36)
+  productId  String       @map("product_id") @db.VarChar(36)
+  supplierId String       @map("supplier_id") @db.VarChar(36)
+  status     RecordStatus @default(active)
+
+  createdAt     DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt     DateTime?  @map("deleted_at") @db.DateTime(3)
+  createdBy     String?    @map("created_by") @db.VarChar(36)
+  createdByType ActorType? @map("created_by_type")
+  updatedBy     String?    @map("updated_by") @db.VarChar(36)
+  updatedByType ActorType? @map("updated_by_type")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  product  Product  @relation(fields: [tenantId, productId], references: [tenantId, id], onDelete: Restrict)
+  // A single-column foreign key: the supplier lives in the global catalog, so
+  // there is no tenant to carry along. The link itself stays tenant-scoped.
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+
+  @@id([tenantId, productId, supplierId])
+  @@index([tenantId, supplierId])
+  @@map("product_suppliers")
+}

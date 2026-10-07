@@ -1,0 +1,961 @@
+{
+  "app": {
+    "title": "Price Updater — Administración de precios"
+  },
+  "autocomplete": {
+    "noResults": "Sin resultados",
+    "loadError": "No se pudieron cargar las opciones",
+    "minLength": "Escribe al menos {{minimum}} caracteres para buscar"
+  },
+  "language": {
+    "es419": "Español",
+    "enUS": "English",
+    "es419Full": "Español (Latinoamérica)",
+    "enUSFull": "English (United States)",
+    "triggerLabel": "Idioma: {{language}}. Cambiar idioma",
+    "saveFailed": "No se pudo guardar el idioma. Se restauró {{language}}."
+  },
+  "shell": {
+    "menu": {
+      "open": "Abrir menú",
+      "close": "Cerrar menú"
+    },
+    "search": {
+      "placeholder": "Buscar en el módulo actual…"
+    },
+    "notifications": "Notificaciones",
+    "help": "Ayuda",
+    "company": {
+      "label": "Empresa",
+      "select": "Selecciona empresa"
+    },
+    "user": {
+      "guest": "Invitado",
+      "globalAdmin": "Administrador global",
+      "logout": "Cerrar sesión"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "priceCatalog": "Catálogo de precios",
+      "companies": "Empresas",
+      "products": "Productos",
+      "priceLists": "Listas de precios",
+      "marketplaces": "Marketplaces",
+      "prices": "Precios",
+      "discounts": "Descuentos",
+      "priceHistory": "Historial de precios",
+      "apiKeys": "API Keys",
+      "users": "Usuarios",
+      "roles": "Roles",
+      "settings": "Configuración"
+    }
+  },
+  "users": {
+    "preferredLocale": {
+      "label": "Idioma preferido",
+      "help": "Idioma de la interfaz para este usuario. Es independiente de la empresa."
+    },
+    "title": "Usuarios",
+    "subtitle": "Accesos a la plataforma y rol asignado.",
+    "entity": "usuario",
+    "searchPlaceholder": "Buscar por nombre o correo…",
+    "emptyMessage": "Invita a tu equipo creando el primer usuario.",
+    "columns": {
+      "email": "Correo",
+      "role": "Rol",
+      "lastLogin": "Último acceso"
+    },
+    "fields": {
+      "email": "Correo electrónico",
+      "emailPlaceholder": "usuario@empresa.com",
+      "password": "Contraseña",
+      "passwordHelp": "Mínimo 8 caracteres. En edición usa el campo para restablecerla.",
+      "newPassword": "Nueva contraseña",
+      "newPasswordHelp": "Déjalo vacío para conservarla."
+    },
+    "rowActions": {
+      "priceLists": "Listas autorizadas"
+    },
+    "access": {
+      "title": "Listas de precios autorizadas",
+      "subtitle": "El usuario sólo podrá consultar las listas seleccionadas.",
+      "user": "Usuario",
+      "empty": "No hay listas activas disponibles.",
+      "save": "Guardar acceso"
+    },
+    "toasts": {
+      "accessUpdated": "Acceso actualizado"
+    },
+    "errors": {
+      "loadAccess": "No se pudo cargar el acceso",
+      "saveAccess": "No se pudo guardar el acceso"
+    }
+  },
+  "common": {
+    "record": "registro",
+    "actions": "Acciones",
+    "refresh": "Actualizar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "deleting": "Eliminando…",
+    "close": "Cerrar",
+    "search": "Buscar…",
+    "selectOption": "Selecciona una opción",
+    "enable": "Activar",
+    "yes": "Sí",
+    "no": "No",
+    "all": "Todos",
+    "activeOnly": "Activos",
+    "inactiveOnly": "Inactivos",
+    "pagination": "Página {{page}} de {{totalPages}} · {{total}} registros",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "reviewFields": "Revisa los campos marcados.",
+    "name": "Nombre",
+    "status": "Estado",
+    "currency": "Moneda",
+    "description": "Descripción",
+    "notes": "Notas",
+    "basePrice": "Precio base",
+    "cost": "Costo",
+    "finalPrice": "Precio final",
+    "slug": "Slug",
+    "code": "Código",
+    "role": "Rol",
+    "email": "Correo",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de fin",
+    "type": "Tipo",
+    "value": "Valor",
+    "priority": "Prioridad",
+    "product": "Producto",
+    "marketplace": "Marketplace",
+    "priceList": "Lista de precios"
+  },
+  "crud": {
+    "create": "Añadir {{entity}}",
+    "edit": "Editar {{entity}}",
+    "loading": "Cargando…",
+    "emptyTitle": "Sin resultados",
+    "emptyHint": "Aún no hay registros que coincidan con los filtros aplicados.",
+    "formSubtitle": "Completa la información requerida.",
+    "created": "Se añadió {{entity}} correctamente.",
+    "updated": "Se actualizó {{entity}} correctamente.",
+    "deleted": "Se eliminó {{entity}} correctamente.",
+    "deleteTitle": "Confirmar eliminación",
+    "deleteSubtitle": "Esta acción desactiva el registro (borrado lógico).",
+    "deleteMessage": "¿Seguro que deseas eliminar {{entity}}? Podrás seguir consultándolo en el historial.",
+    "preview": "Calcular",
+    "previewing": "Calculando…",
+    "retry": "Reintentar"
+  },
+  "state": {
+    "loading": "Cargando información…",
+    "errorTitle": "No se pudo cargar la información",
+    "emptyTitle": "Sin resultados"
+  },
+  "status": {
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "revoked": "Revocado",
+    "expired": "Expirado",
+    "vigente": "Vigente",
+    "system": "Sistema",
+    "user": "Usuario",
+    "api_key": "API key"
+  },
+  "errors": {
+    "unexpected": "Ocurrió un error inesperado. Inténtalo de nuevo.",
+    "VALIDATION_ERROR": "Revisa los campos marcados.",
+    "BAD_REQUEST": "La solicitud no es válida.",
+    "UNAUTHORIZED": "Tu sesión no es válida. Inicia sesión de nuevo.",
+    "FORBIDDEN": "No tienes permisos para realizar esta acción.",
+    "INSUFFICIENT_PERMISSION": "No tienes permisos para realizar esta acción.",
+    "INSUFFICIENT_SCOPE": "La clave de API no tiene el alcance necesario.",
+    "NOT_FOUND": "No se encontró el recurso solicitado.",
+    "CONFLICT": "Ya existe un registro con esos datos.",
+    "UNIQUE_CONSTRAINT": "Ya existe un registro con ese valor único.",
+    "EMAIL_ALREADY_EXISTS": "Ya existe un usuario con ese correo electrónico.",
+    "TENANT_REQUIRED": "Selecciona una empresa para continuar.",
+    "TENANT_HEADER_NOT_ALLOWED": "No puedes cambiar de empresa en esta sesión.",
+    "INVALID_JSON": "El cuerpo de la solicitud está mal formado.",
+    "INTERNAL_ERROR": "Ocurrió un error inesperado. Inténtalo de nuevo.",
+    "INVALID_CREDENTIALS": "El correo o la contraseña no son correctos.",
+    "INVALID_ACCESS_TOKEN": "Tu sesión no es válida. Inicia sesión de nuevo.",
+    "INVALID_REFRESH_TOKEN": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "REFRESH_TOKEN_MISSING": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "REFRESH_TOKEN_EXPIRED": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "REFRESH_TOKEN_REUSED": "Tu sesión se cerró por seguridad. Inicia sesión de nuevo.",
+    "USER_INACTIVE": "Tu cuenta no está activa. Contacta a un administrador.",
+    "INVALID_API_KEY": "La clave de API no es válida.",
+    "API_KEY_REQUIRED": "Falta la clave de API.",
+    "API_KEY_EXPIRED": "La clave de API expiró o fue revocada.",
+    "INVALID_TYPE": "El tipo de dato no es válido (se esperaba {{expected}}).",
+    "INVALID_LITERAL": "El valor no es válido para este campo.",
+    "INVALID_VALUE": "El valor no es válido para este campo.",
+    "UNSUPPORTED_VALUE": "Valor no admitido. Opciones válidas: {{allowed}}.",
+    "UNSUPPORTED_LOCALE": "Idioma no admitido. Opciones válidas: {{allowed}}.",
+    "UNKNOWN_FIELD": "Campo no admitido: {{keys}}.",
+    "INVALID_DATE": "La fecha no es válida.",
+    "INVALID_FORMAT": "El formato no es válido ({{format}}).",
+    "TOO_SMALL": "El valor es demasiado corto o bajo (mínimo {{minimum}}).",
+    "TOO_BIG": "El valor es demasiado largo o alto (máximo {{maximum}}).",
+    "NOT_MULTIPLE_OF": "El valor debe ser múltiplo de {{multipleOf}}.",
+    "NOT_FINITE": "El valor debe ser un número finito.",
+    "IDENTIFIER_ALREADY_EXISTS": "Este código de barras ya está en uso en esta empresa. Un código de barras nunca se libera, ni siquiera al eliminar el registro que lo usaba.",
+    "INVALID_IDENTIFIER_CHECKSUM": "El dígito verificador del código de barras no es válido.",
+    "INVALID_IDENTIFIER_FORMAT": "El código de barras no tiene la cantidad de dígitos correcta para su tipo.",
+    "UNIT_DIMENSION_MISMATCH": "Esta unidad no se puede usar para esa medida.",
+    "DUPLICATE_PRESENTATION": "Otra presentación de este producto ya usa ese nombre.",
+    "INVALID_CHILD_REFERENCE": "Ese registro no pertenece al producto que estás editando.",
+    "UNIT_NOT_AVAILABLE": "Esa unidad ya no está disponible. Elige una activa.",
+    "UNIT_PRECISION_EXCEEDED": "El valor usa más decimales de los que permite esta unidad.",
+    "UNIT_CODE_TAKEN": "Ya existe una unidad de medida con ese código.",
+    "UNIT_CODE_IMMUTABLE": "El código de una unidad de medida no se puede cambiar.",
+    "UNIT_CODE_FORMAT": "Usa de 1 a 8 caracteres: letras, dígitos, guion bajo o guion, empezando por una letra o un dígito.",
+    "UNIT_DIMENSION_LOCKED": "La dimensión no se puede cambiar mientras haya especificaciones o presentaciones que usen esta unidad.",
+    "EMPTY_UPDATE_BODY": "Envía al menos un campo para actualizar.",
+    "SUPPLIER_NAME_TAKEN": "Otro proveedor de esta empresa ya usa ese nombre."
+  },
+  "auth": {
+    "brandTagline": "Gestión de precios y catálogos en canales de venta",
+    "email": {
+      "label": "Correo electrónico",
+      "placeholder": "admin@empresa.com",
+      "invalid": "Ingresa un correo válido."
+    },
+    "password": {
+      "label": "Contraseña",
+      "invalid": "La contraseña es obligatoria."
+    },
+    "submit": "Ingresar",
+    "submitting": "Ingresando…",
+    "seedNote": "Las credenciales iniciales de desarrollo se generan con los seeds. Consulta el README antes de usarlas fuera de un entorno local."
+  },
+  "companies": {
+    "title": "Empresas",
+    "subtitle": "Administración global de empresas. Selecciona la empresa activa desde el encabezado.",
+    "entity": "empresa",
+    "searchPlaceholder": "Buscar por nombre o slug…",
+    "emptyMessage": "Crea la primera empresa para empezar a operar.",
+    "columns": {
+      "commercialName": "Nombre comercial",
+      "legalName": "Razón social"
+    },
+    "fields": {
+      "defaultCurrency": "Moneda por defecto",
+      "timeZone": "Zona horaria",
+      "slugPlaceholder": "mi-empresa",
+      "slugHelp": "Minúsculas y guiones."
+    }
+  },
+  "products": {
+    "title": "Productos",
+    "subtitle": "Catálogo de productos y su precio base.",
+    "entity": "producto",
+    "searchPlaceholder": "Buscar por SKU o nombre…",
+    "emptyMessage": "Crea tu primer producto para empezar a capturar precios.",
+    "columns": {
+      "sku": "SKU"
+    },
+    "fields": {
+      "namePlaceholder": "Nombre del producto",
+      "costPlaceholder": "90.00",
+      "costHelp": "Opcional. Déjalo vacío cuando el costo sea desconocido; no es lo mismo que un costo de 0. Se expresa en la moneda del producto, sin conversión."
+    },
+    "rowActions": {
+      "specification": "Especificaciones"
+    }
+  },
+  "marketplaces": {
+    "title": "Marketplaces",
+    "subtitle": "Canales de venta donde se publican los precios.",
+    "entity": "marketplace",
+    "searchPlaceholder": "Buscar por nombre o código…",
+    "emptyMessage": "Configura Amazon, Mercado Libre o tu tienda propia.",
+    "fields": {
+      "namePlaceholder": "Amazon"
+    }
+  },
+  "priceLists": {
+    "title": "Listas de precios",
+    "subtitle": "Agrupa precios por canal o segmento y asígnalos a marketplaces.",
+    "entity": "lista de precios",
+    "searchPlaceholder": "Buscar por nombre…",
+    "emptyMessage": "Crea listas como Retail, Wholesale o Marketplace.",
+    "fields": {
+      "namePlaceholder": "Retail",
+      "descriptionPlaceholder": "Lista de precios minorista",
+      "currencyHelp": "Opcional: si se omite se usa la moneda de la empresa."
+    },
+    "rowActions": {
+      "marketplaces": "Marketplaces"
+    },
+    "modal": {
+      "title": "Marketplaces de la lista",
+      "subtitle": "Selecciona los marketplaces donde esta lista estará disponible.",
+      "list": "Lista",
+      "empty": "No hay marketplaces activos disponibles.",
+      "save": "Guardar marketplaces"
+    },
+    "toasts": {
+      "saved": "Marketplaces actualizados"
+    },
+    "errors": {
+      "load": "No se pudieron cargar los marketplaces de la lista",
+      "save": "No se pudieron guardar los marketplaces"
+    }
+  },
+  "prices": {
+    "title": "Precios",
+    "subtitle": "Precio por producto, lista y marketplace, con cálculo de precio final.",
+    "entity": "precio",
+    "searchPlaceholder": "Buscar por SKU o nombre…",
+    "productSearchPlaceholder": "Buscar producto por SKU o nombre…",
+    "emptyMessage": "Registra el primer precio para ver el cálculo del descuento aplicable.",
+    "columns": {
+      "list": "Lista",
+      "validFrom": "Vigente desde"
+    },
+    "fields": {
+      "list": "Lista de precios",
+      "endDateHelp": "Opcional: sin fecha fin el precio es indefinido."
+    },
+    "preview": {
+      "label": "Calcular precio final",
+      "basePrice": "Precio base",
+      "discount": "Descuento aplicado",
+      "finalPrice": "Precio final",
+      "none": "Ninguno",
+      "basePriceUsed": "Se usa el precio base",
+      "discountHint": "{{scope}} · {{amount}}"
+    }
+  },
+  "discounts": {
+    "title": "Descuentos",
+    "subtitle": "Un solo descuento por precio, con prioridad producto → lista → marketplace.",
+    "entity": "descuento",
+    "searchPlaceholder": "Buscar por nombre…",
+    "emptyMessage": "Crea un descuento porcentual o de monto fijo con su vigencia.",
+    "columns": {
+      "appliesTo": "Aplica a",
+      "start": "Inicio",
+      "end": "Fin"
+    },
+    "fields": {
+      "namePlaceholder": "Descuento de temporada",
+      "type": "Tipo de descuento",
+      "valueHelp": "Porcentaje (0-100) o monto fijo.",
+      "appliesTo": "Aplicación",
+      "relatedProduct": "Producto relacionado",
+      "relatedPriceList": "Lista relacionada",
+      "relatedMarketplace": "Marketplace relacionado",
+      "endDateHelp": "Opcional. Incluye todo el día seleccionado.",
+      "priorityHelp": "Menor valor = mayor prioridad.",
+      "active": "Descuento activo",
+      "activeHelp": "Solo los descuentos activos se aplican al cálculo del precio final."
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "valueNonNegative": "El valor no puede ser negativo",
+      "startRequired": "La fecha de inicio es obligatoria",
+      "scopeRequired": "Selecciona el registro al que aplica el descuento",
+      "scopeNotApplicable": "Este campo no aplica para el alcance seleccionado",
+      "percentageMax": "El porcentaje no puede ser mayor a 100",
+      "endAfterStart": "La fecha de fin debe ser posterior a la de inicio"
+    }
+  },
+  "priceHistory": {
+    "title": "Historial de precios",
+    "subtitle": "Registro append-only de cada cambio de precio base o final.",
+    "entity": "movimiento",
+    "searchPlaceholder": "Buscar por SKU o nombre…",
+    "emptyMessage": "Aún no hay cambios de precio registrados.",
+    "columns": {
+      "date": "Fecha",
+      "oldBase": "Base anterior",
+      "newBase": "Base nueva",
+      "oldFinal": "Final anterior",
+      "newFinal": "Final nuevo",
+      "actor": "Actor",
+      "reason": "Motivo"
+    }
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "subtitle": "Llaves de sólo lectura para la API externa. La llave completa se muestra una única vez.",
+    "entity": "API key",
+    "searchPlaceholder": "Buscar por nombre o prefijo…",
+    "emptyMessage": "Genera una llave para que tus integraciones consulten precios.",
+    "columns": {
+      "prefix": "Prefijo",
+      "scopes": "Scopes",
+      "expiresAt": "Expira",
+      "lastUsedAt": "Último uso"
+    },
+    "fields": {
+      "namePlaceholder": "Integración marketplace",
+      "scope": "Scope (sólo lectura en fase 1)",
+      "expiresAt": "Expira el",
+      "expiresAtHelp": "Opcional: sin fecha la llave no expira."
+    },
+    "rowActions": {
+      "revoke": "Revocar"
+    },
+    "toasts": {
+      "revoked": "API key revocada"
+    },
+    "scopes": {
+      "productsRead": "products:read — Productos (lectura)",
+      "pricesRead": "prices:read — Precios (lectura)",
+      "priceListsRead": "price-lists:read — Listas de precios (lectura)",
+      "marketplacesRead": "marketplaces:read — Marketplaces (lectura)"
+    }
+  },
+  "roles": {
+    "title": "Roles",
+    "subtitle": "Roles del sistema y roles personalizados de la empresa.",
+    "entity": "rol",
+    "searchPlaceholder": "Buscar por nombre o slug…",
+    "emptyMessage": "Los roles de sistema se crean con los seeds.",
+    "columns": {
+      "isSystem": "Sistema"
+    },
+    "fields": {
+      "slugPlaceholder": "analista_precios"
+    },
+    "rowActions": {
+      "permissions": "Permisos"
+    },
+    "permissions": {
+      "title": "Permisos del rol",
+      "loading": "Cargando permisos…",
+      "selected": "{{count}} permisos seleccionados",
+      "save": "Guardar permisos"
+    },
+    "toasts": {
+      "permissionsUpdated": "Permisos actualizados"
+    },
+    "systemRoles": {
+      "global_admin": {
+        "name": "Administrador global",
+        "description": "Acceso completo a todas las empresas"
+      },
+      "tenant_admin": {
+        "name": "Administrador de empresa",
+        "description": "Acceso completo dentro de la empresa, sin la gestión global de empresas"
+      },
+      "tenant_user": {
+        "name": "Operador de empresa",
+        "description": "Acceso operativo de lectura y escritura en los módulos principales"
+      },
+      "readonly_user": {
+        "name": "Usuario de sólo lectura",
+        "description": "Acceso de sólo lectura al catálogo de precios"
+      },
+      "price_catalog_viewer": {
+        "name": "Consulta de catálogo de precios",
+        "description": "Sólo lectura y exportación de las listas asignadas"
+      }
+    }
+  },
+  "discountType": {
+    "percentage": "Porcentaje",
+    "fixed": "Monto fijo"
+  },
+  "discountScope": {
+    "product": "Producto",
+    "price_list": "Lista de precios",
+    "marketplace": "Marketplace",
+    "base": "Precio base"
+  },
+  "historyReason": {
+    "create": "Creación",
+    "update": "Actualización",
+    "delete": "Eliminación"
+  },
+  "actorType": {
+    "user": "Usuario",
+    "api_key": "API key",
+    "system": "Sistema"
+  },
+  "marketplaceCode": {
+    "amazon": "Amazon",
+    "mercadolibre": "Mercado Libre",
+    "own_store": "Tienda propia"
+  },
+  "exportStatus": {
+    "queued": "En cola",
+    "processing": "Procesando",
+    "completed": "Completada",
+    "failed": "Fallida",
+    "expired": "Expirada"
+  },
+  "exportFormat": {
+    "csv": "CSV",
+    "json": "JSON",
+    "txt": "TXT"
+  },
+  "permissions": {
+    "tenants:read": {
+      "name": "Ver empresas",
+      "description": "Permite ver empresas"
+    },
+    "tenants:create": {
+      "name": "Crear empresas",
+      "description": "Permite crear empresas"
+    },
+    "tenants:update": {
+      "name": "Editar empresas",
+      "description": "Permite editar empresas"
+    },
+    "tenants:delete": {
+      "name": "Eliminar empresas",
+      "description": "Permite eliminar empresas"
+    },
+    "tenants:switch": {
+      "name": "Cambiar de empresa",
+      "description": "Permite cambiar de empresa"
+    },
+    "users:read": {
+      "name": "Ver usuarios",
+      "description": "Permite ver usuarios"
+    },
+    "users:create": {
+      "name": "Crear usuarios",
+      "description": "Permite crear usuarios"
+    },
+    "users:update": {
+      "name": "Editar usuarios",
+      "description": "Permite editar usuarios"
+    },
+    "users:delete": {
+      "name": "Eliminar usuarios",
+      "description": "Permite eliminar usuarios"
+    },
+    "roles:read": {
+      "name": "Ver roles",
+      "description": "Permite ver roles"
+    },
+    "roles:create": {
+      "name": "Crear roles",
+      "description": "Permite crear roles"
+    },
+    "roles:update": {
+      "name": "Editar roles",
+      "description": "Permite editar roles"
+    },
+    "roles:delete": {
+      "name": "Eliminar roles",
+      "description": "Permite eliminar roles"
+    },
+    "roles:assign-permissions": {
+      "name": "Asignar permisos",
+      "description": "Permite asignar permisos a un rol"
+    },
+    "permissions:read": {
+      "name": "Ver permisos",
+      "description": "Permite ver permisos"
+    },
+    "products:read": {
+      "name": "Ver productos",
+      "description": "Permite ver productos"
+    },
+    "products:create": {
+      "name": "Crear productos",
+      "description": "Permite crear productos"
+    },
+    "products:update": {
+      "name": "Editar productos",
+      "description": "Permite editar productos"
+    },
+    "products:delete": {
+      "name": "Eliminar productos",
+      "description": "Permite eliminar productos"
+    },
+    "marketplaces:read": {
+      "name": "Ver marketplaces",
+      "description": "Permite ver marketplaces"
+    },
+    "marketplaces:create": {
+      "name": "Crear marketplaces",
+      "description": "Permite crear marketplaces"
+    },
+    "marketplaces:update": {
+      "name": "Editar marketplaces",
+      "description": "Permite editar marketplaces"
+    },
+    "marketplaces:delete": {
+      "name": "Eliminar marketplaces",
+      "description": "Permite eliminar marketplaces"
+    },
+    "price-lists:read": {
+      "name": "Ver listas de precios",
+      "description": "Permite ver listas de precios"
+    },
+    "price-lists:create": {
+      "name": "Crear listas de precios",
+      "description": "Permite crear listas de precios"
+    },
+    "price-lists:update": {
+      "name": "Editar listas de precios",
+      "description": "Permite editar listas de precios"
+    },
+    "price-lists:delete": {
+      "name": "Eliminar listas de precios",
+      "description": "Permite eliminar listas de precios"
+    },
+    "prices:read": {
+      "name": "Ver precios",
+      "description": "Permite ver precios"
+    },
+    "prices:create": {
+      "name": "Crear precios",
+      "description": "Permite crear precios"
+    },
+    "prices:update": {
+      "name": "Editar precios",
+      "description": "Permite editar precios"
+    },
+    "prices:delete": {
+      "name": "Eliminar precios",
+      "description": "Permite eliminar precios"
+    },
+    "prices:calculate": {
+      "name": "Calcular precios",
+      "description": "Permite calcular precios"
+    },
+    "discounts:read": {
+      "name": "Ver descuentos",
+      "description": "Permite ver descuentos"
+    },
+    "discounts:create": {
+      "name": "Crear descuentos",
+      "description": "Permite crear descuentos"
+    },
+    "discounts:update": {
+      "name": "Editar descuentos",
+      "description": "Permite editar descuentos"
+    },
+    "discounts:delete": {
+      "name": "Eliminar descuentos",
+      "description": "Permite eliminar descuentos"
+    },
+    "price-catalog:read": {
+      "name": "Ver catálogo de precios",
+      "description": "Permite ver catálogo de precios"
+    },
+    "price-catalog:read-all": {
+      "name": "Ver todo catálogo de precios",
+      "description": "Permite ver todo catálogo de precios"
+    },
+    "price-catalog:export": {
+      "name": "Exportar catálogo de precios",
+      "description": "Permite exportar catálogo de precios"
+    },
+    "price-list-access:read": {
+      "name": "Ver acceso a listas de precios",
+      "description": "Permite ver acceso a listas de precios"
+    },
+    "price-list-access:manage": {
+      "name": "Gestionar acceso a listas de precios",
+      "description": "Permite gestionar acceso a listas de precios"
+    },
+    "price-history:read": {
+      "name": "Ver historial de precios",
+      "description": "Permite ver historial de precios"
+    },
+    "api-keys:read": {
+      "name": "Ver API keys",
+      "description": "Permite ver API keys"
+    },
+    "api-keys:create": {
+      "name": "Crear API keys",
+      "description": "Permite crear API keys"
+    },
+    "api-keys:update": {
+      "name": "Editar API keys",
+      "description": "Permite editar API keys"
+    },
+    "api-keys:delete": {
+      "name": "Eliminar API keys",
+      "description": "Permite eliminar API keys"
+    },
+    "api-keys:revoke": {
+      "name": "Revocar API keys",
+      "description": "Permite revocar API keys"
+    },
+    "currencies:read": {
+      "name": "Ver monedas",
+      "description": "Permite ver monedas"
+    },
+    "dashboard:read": {
+      "name": "Ver panel",
+      "description": "Permite ver panel"
+    },
+    "settings:read": {
+      "name": "Ver configuración",
+      "description": "Permite ver configuración"
+    },
+    "settings:update": {
+      "name": "Editar configuración",
+      "description": "Permite editar configuración"
+    }
+  },
+  "priceCatalog": {
+    "title": "Catálogo de precios",
+    "subtitle": "Consulta únicamente las listas asignadas a tu usuario.",
+    "eyebrow": "Consulta autorizada",
+    "columns": {
+      "product": "Producto",
+      "sku": "SKU",
+      "basePrice": "Base",
+      "appliedDiscount": "Descuento aplicado",
+      "discount": "Descuento",
+      "finalPrice": "Precio final"
+    },
+    "fields": {
+      "priceList": {
+        "label": "Lista de precios",
+        "placeholder": "Selecciona una lista"
+      },
+      "marketplace": {
+        "label": "Marketplace",
+        "placeholder": "Selecciona un marketplace"
+      },
+      "search": {
+        "label": "Buscar producto",
+        "placeholder": "SKU o nombre"
+      }
+    },
+    "aria": {
+      "exportFormat": "Formato de exportación"
+    },
+    "actions": {
+      "export": "Exportar",
+      "exporting": "Encolando…",
+      "download": "Descargar"
+    },
+    "noDiscount": "Sin descuento",
+    "loading": "Cargando precios…",
+    "selectPrompt": "Selecciona una lista y un marketplace para consultar.",
+    "empty": "No hay precios disponibles para estos filtros.",
+    "productsCount": "{{count}} productos",
+    "pagination": "Página {{page}} de {{totalPages}}",
+    "exports": {
+      "title": "Mis exportaciones",
+      "subtitle": "Las solicitudes se procesan en segundo plano.",
+      "empty": "Aún no tienes exportaciones."
+    },
+    "toasts": {
+      "exportQueued": "Exportación encolada"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Estado general del catálogo de precios.",
+    "subtitleWithTenant": "Estado general del catálogo de precios de la empresa seleccionada.",
+    "loading": "Cargando el resumen…",
+    "actions": {
+      "newProduct": "Nuevo producto",
+      "newPriceList": "Nueva lista",
+      "uploadPrices": "Cargar precios"
+    },
+    "metrics": {
+      "activeProducts": "Productos activos",
+      "marketplaces": "Marketplaces configurados",
+      "priceLists": "Listas de precios",
+      "activePrices": "Precios vigentes"
+    },
+    "alerts": {
+      "expiringTitle": "Descuentos próximos a vencer ({{days}} días)",
+      "expiresOn": "Vence el {{date}} · {{value}}"
+    },
+    "recent": {
+      "title": "Precios recientes",
+      "viewAll": "Ver todos",
+      "empty": "Aún no hay precios capturados.",
+      "columns": {
+        "product": "Producto",
+        "priceList": "Lista",
+        "marketplace": "Marketplace",
+        "basePrice": "Base",
+        "finalPrice": "Final",
+        "status": "Estado"
+      }
+    },
+    "chart": {
+      "title": "Precios por marketplace",
+      "subtitle": "Cantidad de precios registrados",
+      "empty": "Sin datos para graficar"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Catálogos del sistema y contexto de la sesión actual.",
+    "session": {
+      "title": "Sesión actual",
+      "user": "Usuario",
+      "role": "Rol",
+      "permissions": "Permisos"
+    },
+    "timeZone": {
+      "title": "Zona horaria de la empresa",
+      "subtitle": "Las fechas de precios y descuentos usan el calendario de esta zona.",
+      "label": "Zona IANA",
+      "searchPlaceholder": "Buscar zona o ciudad...",
+      "clockLabel": "Hora local de negocio",
+      "save": "Guardar zona horaria",
+      "saving": "Guardando...",
+      "updated": "Zona horaria actualizada"
+    },
+    "currencies": {
+      "title": "Monedas",
+      "description": "En la fase 1 el catálogo de monedas es de sólo lectura. Se usa para validar el código ISO y redondear los precios; no hay conversión automática.",
+      "loading": "Cargando monedas…",
+      "emptyTitle": "Sin monedas",
+      "emptyMessage": "Ejecuta los seeds para cargar MXN y USD.",
+      "columns": {
+        "code": "Código",
+        "name": "Nombre",
+        "symbol": "Símbolo",
+        "decimals": "Decimales",
+        "status": "Estado"
+      }
+    },
+    "discountRules": {
+      "title": "Reglas de descuento vigentes",
+      "singleDiscount": "Se aplica un único descuento por precio, con prioridad producto → lista de precios → marketplace → precio base.",
+      "stacking": "La acumulación de descuentos y la conversión de moneda están planificadas para fases futuras."
+    },
+    "suppliers": {
+      "title": "Proveedores",
+      "description": "Catálogo global compartido por todas las empresas. Los productos se vinculan desde su especificación.",
+      "action": "Gestionar proveedores"
+    },
+    "unitsOfMeasure": {
+      "title": "Unidades de medida",
+      "description": "Catálogo global compartido por todas las empresas. Los cambios aquí afectan a todas de inmediato.",
+      "action": "Gestionar unidades"
+    }
+  },
+  "productSpecification": {
+    "title": "Especificaciones",
+    "subtitle": "Marca, modelo, medidas, presentaciones y proveedores.",
+    "back": "Productos",
+    "readOnly": "Tienes acceso de solo lectura a este producto.",
+    "emptyTitle": "Todavía no hay nada capturado",
+    "emptyMessage": "Captura la marca, el modelo, las medidas, las presentaciones y los proveedores de este producto.",
+    "notCaptured": "Sin capturar",
+    "sections": {
+      "identity": "Identidad",
+      "measurements": "Medidas",
+      "presentations": "Presentaciones",
+      "suppliers": "Proveedores"
+    },
+    "fields": {
+      "brand": "Marca",
+      "brandPlaceholder": "Busca una marca",
+      "model": "Modelo",
+      "modelPlaceholder": "p. ej. ACM-2026",
+      "weight": "Peso",
+      "length": "Largo",
+      "depth": "Profundidad",
+      "value": "Valor",
+      "unit": "Unidad",
+      "presentationName": "Presentación",
+      "presentationNamePlaceholder": "p. ej. Caja de 12",
+      "quantity": "Cantidad",
+      "identifierType": "Tipo",
+      "identifierValue": "Código de barras"
+    },
+    "actions": {
+      "addPresentation": "Agregar presentación",
+      "removePresentation": "Quitar esta presentación",
+      "addIdentifier": "Agregar código de barras",
+      "removeIdentifier": "Quitar este código de barras",
+      "clear": "Borrar especificación",
+      "clearTitle": "¿Borrar la especificación?",
+      "clearMessage": "La especificación, sus presentaciones, códigos de barras y vínculos con proveedores se quitarán de este producto. El producto se conserva."
+    },
+    "presentations": {
+      "empty": "Aún no hay presentaciones. Una presentación describe cómo se vende el producto: una caja de 12, una unidad, un estuche.",
+      "identifiersEmpty": "Aún no hay códigos de barras."
+    },
+    "suppliers": {
+      "empty": "Sin proveedores asignados.",
+      "filterPlaceholder": "Filtrar proveedores",
+      "noMatch": "Ningún proveedor coincide con ese filtro.",
+      "loadFailed": "No se pudo cargar el catálogo de proveedores.",
+      "selectedCount": "{{count}} seleccionados"
+    },
+    "units": {
+      "historical": "ya no disponible"
+    },
+    "states": {
+      "loading": "Cargando la especificación…",
+      "saved": "Especificación guardada.",
+      "cleared": "Especificación borrada."
+    },
+    "errors": {
+      "loadFailed": "No se pudo cargar la especificación.",
+      "retry": "Reintentar",
+      "missingProduct": "Este producto no existe o no pertenece a esta empresa.",
+      "noUnits": "No se pudo cargar el catálogo de unidades, así que las medidas no se pueden editar.",
+      "pair": "Indica un valor y una unidad, o deja ambos vacíos."
+    },
+    "identifierType": {
+      "ean_8": "EAN-8",
+      "ean_13": "EAN-13",
+      "upc_a": "UPC-A",
+      "upc_e": "UPC-E"
+    },
+    "confirmDiscard": "Tienes cambios sin guardar. ¿Salir sin guardar?"
+  },
+  "unitDimension": {
+    "count": "Conteo",
+    "mass": "Masa",
+    "length": "Longitud"
+  },
+  "suppliers": {
+    "title": "Proveedores",
+    "subtitle": "Catálogo global de proveedores, compartido por todas las empresas y administrado solo por administradores globales.",
+    "entity": "proveedor",
+    "searchPlaceholder": "Buscar proveedores por nombre…",
+    "emptyMessage": "Aún no hay proveedores. Crea el primero para vincularlo a una especificación de producto.",
+    "fields": {
+      "namePlaceholder": "p. ej. Distribuidora Norte",
+      "nameHelp": "Hasta 150 caracteres. El nombre identifica al proveedor dentro del catálogo compartido."
+    }
+  },
+  "unitsOfMeasure": {
+    "title": "Unidades de medida",
+    "subtitle": "Catálogo global compartido por todas las empresas y administrado solo por administradores globales.",
+    "entity": "unidad de medida",
+    "searchPlaceholder": "Buscar por código o nombre…",
+    "emptyMessage": "Aún no hay unidades de medida.",
+    "columns": {
+      "symbol": "Símbolo",
+      "dimension": "Dimensión",
+      "decimals": "Decimales"
+    },
+    "fields": {
+      "codePlaceholder": "p. ej. KG",
+      "codeHelp": "De 1 a 8 caracteres: letras, dígitos, guion bajo o guion. El código es inmutable una vez creada la unidad.",
+      "namePlaceholder": "p. ej. Kilogramo",
+      "symbolPlaceholder": "p. ej. kg",
+      "dimensionHelp": "El peso usa unidades de masa, el largo y el fondo unidades de longitud, y las cantidades unidades de conteo. Queda bloqueada cuando la unidad está en uso.",
+      "decimalsHelp": "De 0 a 3. No se permite bajarlos mientras haya valores guardados que necesiten más precisión."
+    },
+    "messages": {
+      "created": "Unidad creada. Está disponible para todas las empresas.",
+      "updated": "Unidad actualizada. El cambio aplica a todas las empresas.",
+      "deleted": "Unidad desactivada. Los valores ya capturados conservan su unidad.",
+      "deleteTitle": "¿Desactivar esta unidad?",
+      "deleteMessage": "La unidad deja de ofrecerse para nuevas medidas y cantidades. Los valores guardados la conservan y puedes restaurarla volviendo a crear el mismo código."
+    }
+  }
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PrecioGo — reconstrucción vs referencia</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #ffffff;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #111;
+      }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      h2 { font-size: 13px; margin: 26px 0 8px; text-transform: uppercase; letter-spacing: .08em; color: #555; }
+      .row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 14px; }
+      .caption { font-size: 11px; color: #666; margin-top: 8px; max-width: 380px; }
+      .sidebar { background: #F4F7ED; }
+      .header { background: #DDECC8; }
+      img { display: block; }
+      table { border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+      td, th { border: 1px solid #ddd; padding: 5px 9px; text-align: left; }
+      code { background: #f3f3f3; padding: 1px 4px; border-radius: 3px; }
+    </style>
+  </head>
+  <body>
+    <h1>PrecioGo — asset reconstruction vs the supplied reference</h1>
+    <p class="caption" style="max-width: 700px">
+      The reference is a 3196 × 1344 JPEG. Everything else is the approved asset set,
+      rendered at the size the brand guide assigns to each surface.
+    </p>
+
+    <h2>1. Supplied reference (provenance)</h2>
+    <div class="card">
+      <img id="ref" data-reference="preciogo-logo-white-source.jfif" style="width: 620px; height: auto" alt="reference" />
+      <div class="caption">reference/preciogo-logo-white-source.jfif — the visual baseline</div>
+    </div>
+
+    <h2>2. Sidebar lockup — SVG vs 2× PNG at the real 172 × 44 CSS size</h2>
+    <div class="row">
+      <div class="card sidebar">
+        <img data-asset="preciogo-sidebar.svg" style="height: 44px; width: 172px" alt="sidebar svg" />
+        <div class="caption">preciogo-sidebar.svg @ 172 × 44 — what the app renders today</div>
+      </div>
+      <div class="card sidebar">
+        <img data-asset="preciogo-sidebar@2x.png" style="height: 44px; width: 172px" alt="sidebar png" />
+        <div class="caption">preciogo-sidebar@2x.png @ 172 × 44 (downscaled from 344 × 88) — identical lettering on every platform</div>
+      </div>    </div>
+
+    <h2>3. Numerical verification against the reference</h2>
+    <div class="card" style="max-width: 780px">
+      <p class="caption" style="margin-top: 0">
+        Both images were measured, not eyeballed: the reference from its pixels, the sidebar
+        asset from its own markup plus Chrome's text metrics
+        (<code>tools/branding-review/measure-proportions.mjs</code>). The reference is normalised
+        into a 44-unit tall box so the two are comparable. Shares are of total ink width, so they
+        are independent of scale.
+      </p>
+      <table>
+        <tr><th>Metric</th><th>Reference</th><th>Sidebar asset</th><th>Verdict</th></tr>
+        <tr><td>Mark width</td><td>41.4 units</td><td>42 units</td><td>Match</td></tr>
+        <tr><td>Wordmark width share</td><td>65.5%</td><td>64.6%</td><td>Match</td></tr>
+        <tr><td>Gap mark → wordmark</td><td>4.9 units</td><td>~5 units</td><td>Match</td></tr>
+        <tr><td>Space between “Precio” and “Go”</td><td>tight</td><td>5.2 units at 172 px wide</td><td>Consistent, close to touching</td></tr>
+        <tr><td>Wordmark height / ink height</td><td>38.2%</td><td>52.3%</td><td>Different by design: the reference logo is taller than the sidebar slot, so the compact lockup enlarges the type</td></tr>
+      </table>
+      <p class="caption">
+        The only structural difference is the last row, and it follows from fitting a 1344 px tall
+        reference into a 44 px slot: the mark is scaled down and the wordmark is kept legible.
+        At the real 172 × 44 size the composition reads correctly — see the captures from the
+        running application.
+      </p>
+    </div>
+
+    <h2>4. Login / compact UI surface at 48 px height</h2>
+    <div class="row">
+      <div class="card header">
+        <img data-asset="preciogo-sidebar.svg" style="height: 48px; width: 188px" alt="login svg" />
+        <div class="caption">preciogo-sidebar.svg @ 48 px height on the login header <code>#DDECC8</code></div>
+      </div>
+      <div class="card header">
+        <img data-asset="preciogo-sidebar@2x.png" style="height: 48px; width: 188px" alt="login png" />
+        <div class="caption">preciogo-sidebar@2x.png @ 48 px height on the same surface</div>
+      </div>
+    </div>
+
+    <h2>5. Favicon sizes</h2>
+    <div class="row">
+      <div class="card"><img data-asset="favicon-16.png" alt="16" /><div class="caption">16 px</div></div>
+      <div class="card"><img data-asset="favicon-32.png" alt="32" /><div class="caption">32 px</div></div>
+      <div class="card"><img data-asset="favicon-48.png" alt="48" /><div class="caption">48 px</div></div>
+      <div class="card"><img data-asset="preciogo-symbol-small-ui-256.png" style="height: 96px; width: auto" alt="symbol" /><div class="caption">UI symbol 96 px</div></div>
+    </div>
+  </body>
+</html>
