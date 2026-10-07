@@ -79,7 +79,8 @@ Price Updater is a tool for **administering prices, products and discounts** acr
 src/
   backend/prices-api/     # REST API (Express + TypeScript)
   frontend/prices-admin/  # Admin dashboard (Angular)
-deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
+docker-compose.yml        # Quick start: the stack from the published images
+deployment/               # Build from source: Dockerfiles, compose, nginx, .env
 docs/screenshots/         # Images used by this README
 README.md                 # This file
 LICENSE                   # MIT License
@@ -158,6 +159,28 @@ Open **http://localhost:4200** and log in with the credentials below.
 
 ## Docker
 
+### Quick start — published images
+
+Nothing is compiled: the [`docker-compose.yml`](docker-compose.yml) at the
+repository root pulls every service from Docker Hub, so one command is enough.
+
+```bash
+docker compose up -d
+```
+
+It is self-contained, so it also works on its own, without cloning anything:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/docker-compose.yml
+docker compose up -d
+```
+
+Open **http://localhost:4200** and sign in with the credentials below. To change
+secrets, ports or the browser origin, put an `.env` file next to it — every value
+is listed in [`deployment/.env.example`](deployment/.env.example).
+
+### Build and run from this repository
+
 Everything Docker lives in [`deployment/`](deployment/): one `Dockerfile` per
 application plus a [`docker-compose.yml`](deployment/docker-compose.yml) that
 brings up the whole stack — MySQL, the API, the export worker and the web client:
@@ -175,8 +198,9 @@ docker compose up --build
 | `migrate` | one-shot: applies the migrations and runs the seed, then exits |
 | `db` | MySQL 8 — not published on the host by default |
 
-Both images are published on Docker Hub, so they can be **pulled instead of
-built** (`docker compose pull && docker compose up -d`):
+Both services also declare the published image names, so
+`docker compose pull && docker compose up -d` runs the released build instead of
+compiling one:
 
 | Image | Contents |
 |-------|----------|
@@ -357,7 +381,8 @@ Price Updater es una herramienta para **administrar precios, productos y descuen
 src/
   backend/prices-api/     # API REST (Express + TypeScript)
   frontend/prices-admin/  # Panel de administración (Angular)
-deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
+docker-compose.yml        # Inicio rápido: el stack desde las imágenes publicadas
+deployment/               # Construir desde el código: Dockerfiles, compose, nginx, .env
 docs/screenshots/         # Imágenes usadas por este README
 README.md                 # Este archivo
 LICENSE                   # Licencia MIT
@@ -436,6 +461,28 @@ Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo.
 
 ## Docker (contenedores)
 
+### Inicio rápido — imágenes publicadas
+
+No se compila nada: el [`docker-compose.yml`](docker-compose.yml) de la raíz
+descarga todos los servicios desde Docker Hub, así que basta con un comando.
+
+```bash
+docker compose up -d
+```
+
+Es autocontenido, así que también funciona por sí solo, sin clonar nada:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/marcocantugea/price-updater/main/docker-compose.yml
+docker compose up -d
+```
+
+Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo. Para
+cambiar secretos, puertos u origen, pon un archivo `.env` junto a él — todos los
+valores están en [`deployment/.env.example`](deployment/.env.example).
+
+### Construir y ejecutar desde este repositorio
+
 Todo lo de Docker vive en [`deployment/`](deployment/): un `Dockerfile` por
 aplicación y un [`docker-compose.yml`](deployment/docker-compose.yml) que levanta
 todo el stack — MySQL, la API, el worker de exportaciones y el cliente web:
@@ -453,8 +500,9 @@ docker compose up --build
 | `migrate` | de un solo uso: aplica las migraciones y ejecuta el seed, luego sale |
 | `db` | MySQL 8 — no se publica en el host por defecto |
 
-Ambas imágenes están publicadas en Docker Hub, así que se pueden **descargar en
-lugar de construir** (`docker compose pull && docker compose up -d`):
+Ambos servicios también declaran los nombres de las imágenes publicadas, así que
+`docker compose pull && docker compose up -d` ejecuta la versión publicada en
+lugar de compilar una:
 
 | Imagen | Contenido |
 |--------|-----------|
