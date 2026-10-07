@@ -1,0 +1,149 @@
+# -----------------------------------------------------------------------------
+# Price Updater — full stack
+#
+#   cd deployment
+#   docker compose up --build
+#
+#   Web client : http://localhost:4200
+#   API health : http://localhost:3000/health
+#
+# The Dockerfiles live in this folder and build with the repository root as their
+# context (see ../.dockerignore). Everything below can be overridden by copying
+# `.env.example` to `.env`, in this same folder.
+# -----------------------------------------------------------------------------
+name: price-updater
+
+# Shared by the API and the export worker: both are the same image and need the
+# same database, secrets and storage directory.
+x-api-environment: &api-environment
+  NODE_ENV: production
+  DATABASE_URL: mysql://${MYSQL_USER:-pricegrid_user_db}:${MYSQL_PASSWORD:-change-me}@db:3306/${MYSQL_DATABASE:-pricesgrid}
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-access-secret-change-me}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-me}
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+  JWT_REFRESH_TTL_DAYS: ${JWT_REFRESH_TTL_DAYS:-7}
+  API_KEY_HASH_SECRET: ${API_KEY_HASH_SECRET:-dev-api-key-hash-secret-change-me}
+  # Must list the exact origin the browser uses to reach the web client.
+  CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4200}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  # The demo seeds create the demo company, its catalog and the two login
+  # accounts. Set it to false for a real deployment.
+  ALLOW_DEMO_SEED: ${ALLOW_DEMO_SEED:-true}
+  # This stack serves plain HTTP by default, and a browser drops a `Secure`
+  # cookie over HTTP — which would break the refresh-token flow. Turn it on
+  # once the application sits behind HTTPS.
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  SEED_GLOBAL_ADMIN_EMAIL: ${SEED_GLOBAL_ADMIN_EMAIL:-global.admin@pricesgrid.local}
+  SEED_GLOBAL_ADMIN_PASSWORD: ${SEED_GLOBAL_ADMIN_PASSWORD:-ChangeMe!123}
+  SEED_TENANT_ADMIN_EMAIL: ${SEED_TENANT_ADMIN_EMAIL:-tenant.admin@pricesgrid.local}
+  SEED_TENANT_ADMIN_PASSWORD: ${SEED_TENANT_ADMIN_PASSWORD:-ChangeMe!123}
+  # Absolute path inside the container; backed by the `exports` volume.
+  EXPORT_DIRECTORY: /app/storage/exports
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-pricesgrid}
+      MYSQL_USER: ${MYSQL_USER:-pricegrid_user_db}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      # An authenticated query, not `mysqladmin ping`: ping answers before the
+      # databases and users of the entrypoint have been created.
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    # The host port is not published on purpose: the host already runs its own
+    # MySQL in most setups. Uncomment to inspect the data with a local client.
+    # ports:
+    #   - "3307:3306"
+    networks:
+      - price-updater
+
+  # One-shot job: creates the schema (migrations own the STRUCTURE) and loads
+  # the initial data (the seeds own the DATA, and are idempotent). It exits 0
+  # and the API and the worker only start once it has.
+  migrate:
+    build:
+      context: ..
+      dockerfile: deployment/backend.Dockerfile
+    restart: "no"
+    command: ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed/index.js"]
+    environment: *api-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - price-updater
+
+  api:
+    build:
+      context: ..
+      dockerfile: deployment/backend.Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *api-environment
+      PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${API_PORT:-3000}:3000"
+    volumes:
+      - exports:/app/storage/exports
+    networks:
+      - price-updater
+
+  # Processes the queued CSV/JSON/TXT exports. It is the same image as the API
+  # with a different command, and can be scaled independently.
+  worker:
+    build:
+      context: ..
+      dockerfile: deployment/backend.Dockerfile
+    restart: unless-stopped
+    command: ["node", "dist/src/export-worker.js"]
+    environment: *api-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - exports:/app/storage/exports
+    networks:
+      - price-updater
+
+  web:
+    build:
+      context: ..
+      dockerfile: deployment/frontend.Dockerfile
+      args:
+        # Empty uses the API URL committed in src/environments/environment.ts
+        # (http://localhost:3000/api/v1). Set WEB_API_URL in `.env` to point the
+        # bundle at a different API, e.g. https://prices.example.com/api/v1
+        API_URL: ${WEB_API_URL:-}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "${WEB_PORT:-4200}:80"
+    networks:
+      - price-updater
+
+volumes:
+  db_data:
+  exports:
+
+networks:
+  price-updater:
+    driver: bridge

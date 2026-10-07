@@ -33,6 +33,7 @@ A **multi-tenant** administrative web application to capture, edit and propagate
   - [3. Backend (API)](#3-backend-api)
   - [4. Frontend (Angular)](#4-frontend-angular)
   - [5. Verify](#5-verify)
+- [Docker](#docker)
 - [Initial credentials](#initial-credentials)
 - [Environment variables](#environment-variables)
 - [Useful scripts](#useful-scripts)
@@ -78,6 +79,8 @@ Price Updater is a tool for **administering prices, products and discounts** acr
 src/
   backend/prices-api/     # REST API (Express + TypeScript)
   frontend/prices-admin/  # Admin dashboard (Angular)
+deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
+docs/screenshots/         # Images used by this README
 README.md                 # This file
 LICENSE                   # MIT License
 ```
@@ -152,6 +155,60 @@ curl http://localhost:3000/health
 ```
 
 Open **http://localhost:4200** and log in with the credentials below.
+
+## Docker
+
+Everything Docker lives in [`deployment/`](deployment/): one `Dockerfile` per
+application plus a [`docker-compose.yml`](deployment/docker-compose.yml) that
+brings up the whole stack — MySQL, the API, the export worker and the web client:
+
+```bash
+cd deployment
+docker compose up --build
+```
+
+| Service | URL / purpose |
+|---------|---------------|
+| `web` | http://localhost:4200 — the Angular client |
+| `api` | http://localhost:3000 — the REST API (`GET /health`) |
+| `worker` | processes the queued CSV / JSON / TXT exports |
+| `migrate` | one-shot: applies the migrations and runs the seed, then exits |
+| `db` | MySQL 8 — not published on the host by default |
+
+The seeds create the two login accounts, so the credentials below work out of the
+box. Every other value (secrets, ports, the API URL the bundle points at) can be
+overridden by copying the example environment file:
+
+```bash
+cd deployment && cp .env.example .env     # Windows: cd deployment; copy .env.example .env
+```
+
+Two defaults matter before exposing the stack to the internet:
+
+- `COOKIE_SECURE=false` — the stack serves plain HTTP, and a browser drops a
+  `Secure` refresh cookie over HTTP, which would break the session. Set it to
+  `true` once the application sits behind HTTPS.
+- `ALLOW_DEMO_SEED=true` — the seeds create the demo company and its two
+  accounts. Set it to `false` for a real deployment.
+
+Useful commands:
+
+```bash
+docker compose logs -f api        # follow the API logs
+docker compose run --rm migrate   # re-apply the migrations and the seeds
+docker compose down               # stop, keeping the volumes
+docker compose down -v            # stop and delete the database and the exports
+```
+
+**Deploying on another host.** The Angular bundle carries the API URL it was
+built with, and the committed default is `http://localhost:3000/api/v1`. On a
+remote server, set both values in `.env` before building:
+
+```dotenv
+WEB_API_URL=https://prices.example.com/api/v1
+CORS_ORIGIN=https://prices.example.com
+WEB_PORT=80
+```
 
 ## Initial credentials
 
@@ -246,6 +303,7 @@ This project is distributed under the [MIT License](LICENSE). You are free to us
   - [3. Backend (API)](#3-backend-api)
   - [4. Frontend (Angular)](#4-frontend-angular)
   - [5. Verificar](#5-verificar)
+- [Docker (contenedores)](#docker-contenedores)
 - [Credenciales iniciales](#credenciales-iniciales)
 - [Variables de entorno](#variables-de-entorno)
 - [Scripts útiles](#scripts-útiles)
@@ -291,6 +349,8 @@ Price Updater es una herramienta para **administrar precios, productos y descuen
 src/
   backend/prices-api/     # API REST (Express + TypeScript)
   frontend/prices-admin/  # Panel de administración (Angular)
+deployment/               # Docker: compose, Dockerfiles, nginx.conf, .env.example
+docs/screenshots/         # Imágenes usadas por este README
 README.md                 # Este archivo
 LICENSE                   # Licencia MIT
 ```
@@ -365,6 +425,60 @@ curl http://localhost:3000/health
 ```
 
 Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo.
+
+## Docker (contenedores)
+
+Todo lo de Docker vive en [`deployment/`](deployment/): un `Dockerfile` por
+aplicación y un [`docker-compose.yml`](deployment/docker-compose.yml) que levanta
+todo el stack — MySQL, la API, el worker de exportaciones y el cliente web:
+
+```bash
+cd deployment
+docker compose up --build
+```
+
+| Servicio | URL / función |
+|----------|---------------|
+| `web` | http://localhost:4200 — el cliente Angular |
+| `api` | http://localhost:3000 — la API REST (`GET /health`) |
+| `worker` | procesa las exportaciones CSV / JSON / TXT en cola |
+| `migrate` | de un solo uso: aplica las migraciones y ejecuta el seed, luego sale |
+| `db` | MySQL 8 — no se publica en el host por defecto |
+
+Los seeds crean las dos cuentas de acceso, así que las credenciales de abajo
+funcionan directamente. Cualquier otro valor (secretos, puertos, la URL de la API
+que usa el bundle) se puede sobrescribir copiando el archivo de ejemplo:
+
+```bash
+cd deployment && cp .env.example .env     # Windows: cd deployment; copy .env.example .env
+```
+
+Dos valores por defecto conviene conocerlos antes de exponer el stack a internet:
+
+- `COOKIE_SECURE=false` — el stack sirve HTTP en claro y el navegador descarta
+  una cookie de refresco `Secure` sobre HTTP, lo que rompería la sesión.
+  Actívalo cuando la aplicación esté detrás de HTTPS.
+- `ALLOW_DEMO_SEED=true` — los seeds crean la empresa demo y sus dos cuentas.
+  Ponlo en `false` para un despliegue real.
+
+Comandos útiles:
+
+```bash
+docker compose logs -f api        # seguir los logs de la API
+docker compose run --rm migrate   # volver a aplicar migraciones y seeds
+docker compose down               # detener, conservando los volúmenes
+docker compose down -v            # detener y borrar la base de datos y las exportaciones
+```
+
+**Desplegar en otro host.** El bundle de Angular lleva compilada la URL de la API
+y el valor por defecto es `http://localhost:3000/api/v1`. En un servidor remoto,
+configura ambos valores en `.env` antes de construir:
+
+```dotenv
+WEB_API_URL=https://prices.example.com/api/v1
+CORS_ORIGIN=https://prices.example.com
+WEB_PORT=80
+```
 
 ## Credenciales iniciales
 
