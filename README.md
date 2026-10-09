@@ -70,8 +70,14 @@ Price Updater is a tool for **administering prices, products and discounts** acr
 
 ## Prerequisites
 
-- **Node.js 20+** (developed on Node 24) and **npm**.
-- **MySQL 8** running (Laragon, XAMPP, Docker or a native install).
+| Requirement | Why · how to check it |
+|-------------|-----------------------|
+| **Node.js 20+** and **npm** | Runs the API and builds the client — `node --version` |
+| **MySQL 8** | The single shared database — `mysql --version` |
+| **Git** | To clone the repository — `git --version` |
+
+MySQL can be the server you already run (Laragon, XAMPP, Homebrew) or the
+container the Compose stack starts for you.
 
 ## Repository layout
 
@@ -88,16 +94,27 @@ LICENSE                   # MIT License
 
 ## Installation
 
+Two ways in. Pick one — you do not need both:
+
+| Path | Takes | Choose it if |
+|------|-------|--------------|
+| **[Docker](#docker)** — prebuilt images | ~2 minutes | You want to try it or self-host it |
+| **Manual, below** | ~15 minutes | You are going to change the code |
+
+Every step says what you should see, so you can stop at the first sign of trouble
+instead of at the end.
+
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/marcocantugea/price-updater.git
 cd price-updater
 ```
 
 ### 2. Create the database
 
-Create the database (and, recommended, a dedicated user). The `pricesgrid` and `pricegrid_user_db` names are inherited values; you may change them, but then you must also adjust `DATABASE_URL` in `.env`.
+The names `pricesgrid` and `pricegrid_user_db` are inherited values; you may
+change them, but then adjust `DATABASE_URL` in `.env` to match (step 3).
 
 ```sql
 CREATE DATABASE pricesgrid CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -107,7 +124,11 @@ CREATE USER 'pricegrid_user_db'@'localhost' IDENTIFIED BY '<strong-password>';
 GRANT ALL PRIVILEGES ON pricesgrid.* TO 'pricegrid_user_db'@'localhost';
 ```
 
-> For a throwaway local database you can also use `root` with no password: `DATABASE_URL="mysql://root@127.0.0.1:3306/pricesgrid"`.
+> For a throwaway local database you can also use `root` with no password:
+> `DATABASE_URL="mysql://root@127.0.0.1:3306/pricesgrid"`.
+
+**Did it work?** `mysql -u pricegrid_user_db -p -e "SHOW DATABASES;"` lists
+`pricesgrid`.
 
 ### 3. Backend (API)
 
@@ -119,23 +140,33 @@ npm install
 
 # 2) Create the environment file
 cp .env.example .env        # Windows: copy .env.example .env
-#    -> edit DATABASE_URL and the JWT / API key secrets
+#    -> open it and set DATABASE_URL plus the JWT / API key secrets
 
 # 3) Generate the Prisma client
 npm run prisma:generate
 
-# 4) Apply the schema (migrations own the STRUCTURE only)
-npm run migrate:dev         # development (creates + applies)
+# 4) Create the schema (migrations own the STRUCTURE only)
+npm run migrate:dev         # development: creates + applies
 # npm run migrate:deploy    # CI / staging / production
 
-# 5) Insert the initial data (idempotent)
+# 5) Insert the initial data (idempotent, safe to re-run)
 npm run seed
 
 # 6) Start the API
 npm run dev                 # http://localhost:3000
 ```
 
-> If a later `git pull` brings a new migration, re-run step 4 before starting the API.
+**Did it work?** Leave that terminal running and, in another one:
+
+```bash
+curl http://localhost:3000/health
+# {"status":"ok","db":"up","uptime":3,"version":"1.0.0","timestamp":"..."}
+```
+
+`"db":"up"` is the part that matters: the process answered **and** reached MySQL.
+
+> After a `git pull` that brings a new migration, re-run step 4 before starting
+> the API, or the client would query a column the database does not have yet.
 
 ### 4. Frontend (Angular)
 
@@ -146,16 +177,25 @@ npm install
 npm start                   # http://localhost:4200
 ```
 
-> The dev server proxies requests to the API at `http://localhost:3000`. Start the backend first so login works.
+**Did it work?** The terminal prints `Local: http://localhost:4200/` and the
+browser shows the sign-in screen. The dev server proxies `/api` to
+`http://localhost:3000`, so the API from step 3 has to be running.
 
-### 5. Verify
+### 5. Sign in
 
-```bash
-curl http://localhost:3000/health
-# { "status": "ok", "db": "up", "uptime": 3, "version": "1.0.0", "timestamp": "..." }
-```
+Open **http://localhost:4200** and use the development accounts below. `npm run
+seed` creates them, and they only exist while `ALLOW_DEMO_SEED` is true.
 
-Open **http://localhost:4200** and log in with the credentials below.
+### If something fails
+
+| Symptom | Cause and fix |
+|---------|---------------|
+| `P1001: Can't reach database server` | MySQL is not running, or `DATABASE_URL` is wrong. Start MySQL and re-check host, port, user and password. |
+| `Unknown database 'pricesgrid'` | Step 2 was skipped. Create the database, then re-run `npm run migrate:dev`. |
+| `@prisma/client did not initialize yet` | Run `npm run prisma:generate`. |
+| `The column … does not exist in the current database` | A migration exists but was never applied. `npx prisma migrate status`, then `npm run migrate:deploy`. |
+| Login answers `500`, or the demo accounts do not exist | The demo seeds never ran. Re-run `npm run seed` with `ALLOW_DEMO_SEED=true` (or `NODE_ENV=development`). |
+| The client cannot reach the API | `CORS_ORIGIN` must be the exact origin of the web client (`http://localhost:4200`). Restart the API after changing it. |
 
 ## Docker
 
@@ -372,8 +412,14 @@ Price Updater es una herramienta para **administrar precios, productos y descuen
 
 ## Requisitos previos
 
-- **Node.js 20+** (desarrollado sobre Node 24) y **npm**.
-- **MySQL 8** en ejecución (Laragon, XAMPP, Docker o instalación nativa).
+| Requisito | Para qué · cómo comprobarlo |
+|-----------|-----------------------------|
+| **Node.js 20+** y **npm** | Ejecuta la API y compila el cliente — `node --version` |
+| **MySQL 8** | La única base de datos compartida — `mysql --version` |
+| **Git** | Para clonar el repositorio — `git --version` |
+
+MySQL puede ser el servidor que ya usas (Laragon, XAMPP, Homebrew) o el contenedor
+que levanta el stack de Compose por ti.
 
 ## Estructura del repositorio
 
@@ -390,16 +436,28 @@ LICENSE                   # Licencia MIT
 
 ## Instalación
 
+Hay dos caminos. Elige uno — no necesitas los dos:
+
+| Camino | Tarda | Elígelo si… |
+|--------|-------|-------------|
+| **[Docker](#docker-contenedores)** — imágenes ya construidas | ~2 minutos | Quieres probarlo o autoalojarlo |
+| **Manual, aquí abajo** | ~15 minutos | Vas a modificar el código |
+
+Cada paso dice qué deberías ver, así puedes parar ante el primer problema y no al
+final.
+
 ### 1. Clonar el repositorio
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/marcocantugea/price-updater.git
 cd price-updater
 ```
 
 ### 2. Crear la base de datos
 
-Crea la base de datos (y, recomendado, un usuario dedicado). Los nombres `pricesgrid` y `pricegrid_user_db` son valores heredados; puedes cambiarlos, pero entonces también debes ajustar `DATABASE_URL` en el `.env`.
+Los nombres `pricesgrid` y `pricegrid_user_db` son valores heredados; puedes
+cambiarlos, pero entonces ajusta `DATABASE_URL` en el `.env` para que coincida
+(paso 3).
 
 ```sql
 CREATE DATABASE pricesgrid CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -409,7 +467,11 @@ CREATE USER 'pricegrid_user_db'@'localhost' IDENTIFIED BY '<contraseña-fuerte>'
 GRANT ALL PRIVILEGES ON pricesgrid.* TO 'pricegrid_user_db'@'localhost';
 ```
 
-> Para un entorno local desechable también puedes usar `root` sin contraseña: `DATABASE_URL="mysql://root@127.0.0.1:3306/pricesgrid"`.
+> Para un entorno local desechable también puedes usar `root` sin contraseña:
+> `DATABASE_URL="mysql://root@127.0.0.1:3306/pricesgrid"`.
+
+**¿Funcionó?** `mysql -u pricegrid_user_db -p -e "SHOW DATABASES;"` lista
+`pricesgrid`.
 
 ### 3. Backend (API)
 
@@ -421,23 +483,33 @@ npm install
 
 # 2) Crear el archivo de entorno
 cp .env.example .env        # Windows: copy .env.example .env
-#    -> edita DATABASE_URL y los secretos JWT / API key
+#    -> ábrelo y ajusta DATABASE_URL y los secretos JWT / API key
 
 # 3) Generar el cliente Prisma
 npm run prisma:generate
 
-# 4) Aplicar el esquema (las migraciones solo crean la ESTRUCTURA)
-npm run migrate:dev         # desarrollo (crea + aplica)
+# 4) Crear el esquema (las migraciones solo crean la ESTRUCTURA)
+npm run migrate:dev         # desarrollo: crea + aplica
 # npm run migrate:deploy    # CI / staging / producción
 
-# 5) Insertar los datos iniciales (idempotente)
+# 5) Insertar los datos iniciales (idempotente, se puede repetir)
 npm run seed
 
 # 6) Iniciar la API
 npm run dev                 # http://localhost:3000
 ```
 
-> Si luego haces `git pull` y trae una migración nueva, vuelve a ejecutar el paso 4 antes de arrancar la API.
+**¿Funcionó?** Deja esa terminal abierta y, en otra:
+
+```bash
+curl http://localhost:3000/health
+# {"status":"ok","db":"up","uptime":3,"version":"1.0.0","timestamp":"..."}
+```
+
+Lo que importa es `"db":"up"`: el proceso respondió **y** llegó a MySQL.
+
+> Si haces `git pull` y trae una migración nueva, vuelve a ejecutar el paso 4 antes
+> de arrancar la API, o el cliente consultará una columna que la base aún no tiene.
 
 ### 4. Frontend (Angular)
 
@@ -448,16 +520,25 @@ npm install
 npm start                   # http://localhost:4200
 ```
 
-> El servidor de desarrollo proxea las peticiones a la API en `http://localhost:3000`. Arranca primero el backend para que el login funcione.
+**¿Funcionó?** La terminal imprime `Local: http://localhost:4200/` y el navegador
+muestra la pantalla de acceso. El servidor de desarrollo proxea `/api` a
+`http://localhost:3000`, así que la API del paso 3 tiene que estar corriendo.
 
-### 5. Verificar
+### 5. Iniciar sesión
 
-```bash
-curl http://localhost:3000/health
-# { "status": "ok", "db": "up", "uptime": 3, "version": "1.0.0", "timestamp": "..." }
-```
+Abre **http://localhost:4200** y usa las cuentas de desarrollo de abajo. Las crea
+`npm run seed`, y solo existen mientras `ALLOW_DEMO_SEED` sea true.
 
-Abre **http://localhost:4200** e inicia sesión con las credenciales de abajo.
+### Si algo falla
+
+| Síntoma | Causa y solución |
+|---------|------------------|
+| `P1001: Can't reach database server` | MySQL no está corriendo o `DATABASE_URL` está mal. Arráncalo y revisa host, puerto, usuario y contraseña. |
+| `Unknown database 'pricesgrid'` | Te saltaste el paso 2. Crea la base y vuelve a ejecutar `npm run migrate:dev`. |
+| `@prisma/client did not initialize yet` | Ejecuta `npm run prisma:generate`. |
+| `The column … does not exist in the current database` | Hay una migración sin aplicar. `npx prisma migrate status` y luego `npm run migrate:deploy`. |
+| El login responde `500`, o las cuentas demo no existen | Los seeds demo no se ejecutaron. Repite `npm run seed` con `ALLOW_DEMO_SEED=true` (o `NODE_ENV=development`). |
+| El cliente no alcanza la API | `CORS_ORIGIN` debe ser el origen exacto del cliente web (`http://localhost:4200`). Reinicia la API tras cambiarlo. |
 
 ## Docker (contenedores)
 

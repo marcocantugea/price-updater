@@ -81,4 +81,4 @@ docker build -f deployment/frontend.Dockerfile \
 
 The full guide — services, variables and what to change before exposing the stack
 to the internet — is in the main [README](../README.md#docker).
-· La guía completa está en el [README principal](../README.md#docker--contenedores).
+· La guía completa está en el [README principal](../README.md#docker-contenedores).
