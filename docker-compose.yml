@@ -83,7 +83,7 @@ services:
   # the initial data (the seeds own the DATA, and are idempotent). It exits 0
   # and the API and the worker only start once it has.
   migrate:
-    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.1.0}
     restart: "no"
     command: ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed/index.js"]
     environment: *api-environment
@@ -94,7 +94,7 @@ services:
       - price-updater
 
   api:
-    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.1.0}
     restart: unless-stopped
     environment:
       <<: *api-environment
@@ -114,7 +114,7 @@ services:
   # Processes the queued CSV/JSON/TXT exports. Same image as the API with a
   # different command, and it can be scaled independently.
   worker:
-    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.1.0}
     restart: unless-stopped
     command: ["node", "dist/src/export-worker.js"]
     environment: *api-environment
@@ -129,7 +129,7 @@ services:
   # The published bundle already points at http://localhost:3000/api/v1, which is
   # what this stack publishes on the host.
   web:
-    image: marcocantugea/price-updater-web:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-web:${IMAGE_TAG:-1.1.0}
     restart: unless-stopped
     depends_on:
       api:

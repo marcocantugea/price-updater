@@ -160,7 +160,7 @@ npm run dev                 # http://localhost:3000
 
 ```bash
 curl http://localhost:3000/health
-# {"status":"ok","db":"up","uptime":3,"version":"1.0.0","timestamp":"..."}
+# {"status":"ok","db":"up","uptime":3,"version":"1.1.0","timestamp":"..."}
 ```
 
 `"db":"up"` is the part that matters: the process answered **and** reached MySQL.
@@ -244,8 +244,8 @@ compiling one:
 
 | Image | Contents |
 |-------|----------|
-| `marcocantugea/price-updater-api:1.0.0` | API, migrations and export worker |
-| `marcocantugea/price-updater-web:1.0.0` | Angular bundle served by nginx |
+| `marcocantugea/price-updater-api:1.1.0` | API, migrations and export worker |
+| `marcocantugea/price-updater-web:1.1.0` | Angular bundle served by nginx |
 
 The seeds create the two login accounts, so the credentials below work out of the
 box. Every other value (secrets, ports, the API URL the bundle points at) can be
@@ -503,7 +503,7 @@ npm run dev                 # http://localhost:3000
 
 ```bash
 curl http://localhost:3000/health
-# {"status":"ok","db":"up","uptime":3,"version":"1.0.0","timestamp":"..."}
+# {"status":"ok","db":"up","uptime":3,"version":"1.1.0","timestamp":"..."}
 ```
 
 Lo que importa es `"db":"up"`: el proceso respondió **y** llegó a MySQL.
@@ -587,8 +587,8 @@ lugar de compilar una:
 
 | Imagen | Contenido |
 |--------|-----------|
-| `marcocantugea/price-updater-api:1.0.0` | API, migraciones y worker de exportaciones |
-| `marcocantugea/price-updater-web:1.0.0` | Bundle de Angular servido por nginx |
+| `marcocantugea/price-updater-api:1.1.0` | API, migraciones y worker de exportaciones |
+| `marcocantugea/price-updater-web:1.1.0` | Bundle de Angular servido por nginx |
 
 Los seeds crean las dos cuentas de acceso, así que las credenciales de abajo
 funcionan directamente. Cualquier otro valor (secretos, puertos, la URL de la API

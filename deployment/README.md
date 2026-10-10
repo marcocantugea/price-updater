@@ -42,8 +42,8 @@ docker compose up -d
 
 | Image · Imagen | Contents · Contenido |
 |----------------|----------------------|
-| `marcocantugea/price-updater-api:1.0.0` | API, migrations and export worker |
-| `marcocantugea/price-updater-web:1.0.0` | Angular bundle served by nginx |
+| `marcocantugea/price-updater-api:1.1.0` | API, migrations and export worker |
+| `marcocantugea/price-updater-web:1.1.0` | Angular bundle served by nginx |
 
 Drop an `.env` next to the file to change secrets, ports or the browser origin.
 · Pon un `.env` junto al archivo para cambiar secretos, puertos u origen.

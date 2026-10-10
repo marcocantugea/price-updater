@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { asyncHandler } from '../common/utils/async-handler';
+import { APP_VERSION } from '../version';
 
-/** Health check validating both the API process and the database connection. */
-export function createHealthRouter(prisma: any, version = '1.0.0'): Router {
+/**
+ * Health check validating both the API process and the database connection.
+ *
+ * The version is the application manifest's, not a literal: the published image
+ * tag and the reported version must not be able to drift apart.
+ */
+export function createHealthRouter(prisma: any, version: string = APP_VERSION): Router {
   const router = Router();
 
   router.get(

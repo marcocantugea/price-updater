@@ -14,8 +14,8 @@
 # The images are also published on Docker Hub, so they can be pulled instead of
 # built. Set IMAGE_TAG in `.env` to pin a different version:
 #
-#   marcocantugea/price-updater-api:1.0.0   (API + migrate + worker)
-#   marcocantugea/price-updater-web:1.0.0   (web client)
+#   marcocantugea/price-updater-api:1.1.0   (API + migrate + worker)
+#   marcocantugea/price-updater-web:1.1.0   (web client)
 # -----------------------------------------------------------------------------
 name: price-updater
 
@@ -79,7 +79,7 @@ services:
   # the initial data (the seeds own the DATA, and are idempotent). It exits 0
   # and the API and the worker only start once it has.
   migrate:
-    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.1.0}
     build:
       context: ..
       dockerfile: deployment/backend.Dockerfile
@@ -93,7 +93,7 @@ services:
       - price-updater
 
   api:
-    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.1.0}
     build:
       context: ..
       dockerfile: deployment/backend.Dockerfile
@@ -116,7 +116,7 @@ services:
   # Processes the queued CSV/JSON/TXT exports. It is the same image as the API
   # with a different command, and can be scaled independently.
   worker:
-    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-api:${IMAGE_TAG:-1.1.0}
     build:
       context: ..
       dockerfile: deployment/backend.Dockerfile
@@ -132,7 +132,7 @@ services:
       - price-updater
 
   web:
-    image: marcocantugea/price-updater-web:${IMAGE_TAG:-1.0.0}
+    image: marcocantugea/price-updater-web:${IMAGE_TAG:-1.1.0}
     build:
       context: ..
       dockerfile: deployment/frontend.Dockerfile

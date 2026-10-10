@@ -23,7 +23,7 @@ seconds later. The failure is specific to the global-admin session.
 
 | Item | Value |
 | --- | --- |
-| Deployment | `deployment/docker-compose.yml` (published images `marcocantugea/price-updater-api:1.0.0`, `...-web:1.0.0`) |
+| Deployment | `deployment/docker-compose.yml` (published images `marcocantugea/price-updater-api:1.1.0`, `...-web:1.1.0`) |
 | API | `NODE_ENV=production`, `http://localhost:3000` |
 | Web | `http://localhost:4200` |
 | Database | MySQL 8.0 (container `price-updater-db-1`) |
