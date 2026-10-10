@@ -118,6 +118,18 @@ export class PriceCatalogService {
     };
   }
 
+  /**
+   * Whether the user may read every price list of the company.
+   *
+   * Exposed so callers that authorize reads themselves — the export list/get
+   * ownership filter, the export worker — share the one definition of "this user
+   * sees the whole company" instead of re-deriving it from `isGlobalAdmin` and a
+   * permission string.
+   */
+  async canReadAll(user: AuthUser): Promise<boolean> {
+    return this.access.canReadAll(user);
+  }
+
   async assertExportInput(tenantId: string, user: AuthUser, priceListId: string, marketplaceId: string): Promise<void> {
     await this.access.assertVisible(tenantId, user, priceListId);
     const relation = await this.prisma.priceListMarketplace.findFirst({

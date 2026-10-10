@@ -26,11 +26,11 @@ export class ExportController {
   });
 
   list = asyncHandler(async (req: Request, res: Response) => {
-    res.json(toPlain(await this.service.list(requireTenant(req), user(req).id)));
+    res.json(toPlain(await this.service.list(requireTenant(req), user(req))));
   });
 
   get = asyncHandler(async (req: Request, res: Response) => {
-    res.json(toPlain(await this.service.get(requireTenant(req), user(req).id, String(req.params.id))));
+    res.json(toPlain(await this.service.get(requireTenant(req), user(req), String(req.params.id))));
   });
 
   download = asyncHandler(async (req: Request, res: Response) => {
