@@ -204,6 +204,27 @@ describe('error handler middleware', () => {
     expect(res.body.message).not.toContain('Prisma');
   });
 
+  /**
+   * A foreign key that does not resolve is a client-visible reference problem
+   * (for example a selection this tenant cannot see), not a server fault. It used
+   * to fall through to the 500 branch, which in production told the user nothing
+   * but "Unexpected error".
+   */
+  it('maps foreign-key violations to 422 with a localizable code', () => {
+    const res = mockResponse();
+    errorHandler(
+      { code: 'P2003', meta: { modelName: 'ExportRequest', field_name: 'tenant_id' } },
+      mockRequest(),
+      res,
+      jest.fn()
+    );
+
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.body).toMatchObject({ code: 'INVALID_REFERENCE' });
+    expect(res.body.message).not.toContain('Prisma');
+    expect(res.body.message).not.toContain('tenant_id');
+  });
+
   it('maps unknown errors to 500 and hides internals in production', () => {
     const res = mockResponse();
     errorHandler(new Error('boom'), mockRequest(), res, jest.fn());
