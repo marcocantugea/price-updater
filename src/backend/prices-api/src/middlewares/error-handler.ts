@@ -60,6 +60,15 @@ export function errorHandler(
     code = 'UNIQUE_CONSTRAINT';
     message = 'A record with the same unique value already exists';
     logLevel = 'warn';
+  } else if (typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'P2003') {
+    // A foreign key that does not resolve is a bad request, not a server fault:
+    // the client referenced something this tenant cannot see. Reported as 422
+    // with its own code so the UI can localize it instead of showing the opaque
+    // "Unexpected error" a 500 produces in production.
+    statusCode = 422;
+    code = 'INVALID_REFERENCE';
+    message = 'A referenced record does not exist';
+    logLevel = 'warn';
   } else if (error instanceof Error) {
     message = env.isProduction ? 'Unexpected error' : error.message;
   }

@@ -575,7 +575,15 @@ model UserPriceListAccess {
 model ExportRequest {
   id                String       @id @default(uuid()) @db.VarChar(36)
   tenantId          String       @map("tenant_id") @db.VarChar(36)
-  requestedByUserId String       @map("requested_by_user_id") @db.VarChar(36)
+  // Requester, when that user actually belongs to `tenantId`.
+  //
+  // A global administrator has `users.tenant_id = NULL` and can export the
+  // catalog of any company selected in the header. The composite foreign key
+  // `(tenant_id, requested_by_user_id)` cannot represent that: the pair does not
+  // exist in `users`. The column is therefore nullable and holds `NULL` for a
+  // requester who does not belong to the exported company — the audit columns
+  // record the operation as `system` instead.
+  requestedByUserId String?      @map("requested_by_user_id") @db.VarChar(36)
   priceListId       String       @map("price_list_id") @db.VarChar(36)
   marketplaceId     String       @map("marketplace_id") @db.VarChar(36)
   format            ExportFormat
@@ -601,7 +609,7 @@ model ExportRequest {
   createdByType     ActorType?   @map("created_by_type")
 
   tenant          Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requestedByUser User        @relation(fields: [tenantId, requestedByUserId], references: [tenantId, id], onDelete: Cascade)
+  requestedByUser User?       @relation(fields: [tenantId, requestedByUserId], references: [tenantId, id], onDelete: Cascade)
   priceList       PriceList   @relation(fields: [tenantId, priceListId], references: [tenantId, id], onDelete: Cascade)
   marketplace     Marketplace @relation(fields: [tenantId, marketplaceId], references: [tenantId, id], onDelete: Cascade)
 

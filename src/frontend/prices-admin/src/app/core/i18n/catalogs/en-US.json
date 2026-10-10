@@ -178,6 +178,7 @@
     "NOT_FOUND": "The requested resource was not found.",
     "CONFLICT": "A record with that data already exists.",
     "UNIQUE_CONSTRAINT": "A record with that unique value already exists.",
+    "INVALID_REFERENCE": "That selection is no longer available. Refresh the page and try again.",
     "EMAIL_ALREADY_EXISTS": "A user with that email address already exists.",
     "TENANT_REQUIRED": "Select a company to continue.",
     "TENANT_HEADER_NOT_ALLOWED": "You cannot switch company in this session.",

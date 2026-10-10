@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { env } from '../config/env';
 import { TOKENS } from '../di/tokens';
 import { NotFoundError, ValidationError } from '../common/errors';
+import { logger } from '../common/logger';
 import { DEFAULT_LOCALE } from '../common/i18n/supported-locales';
 import { serializeCatalogExport, type ExportFormat } from './export.serializers';
 import type { PriceCatalogService } from './price-catalog.service';
@@ -14,6 +15,36 @@ export interface ExportInput {
   marketplaceId: string;
   format: ExportFormat;
   search?: string;
+}
+
+/**
+ * Requester reference and audit actor for a queued export.
+ *
+ * `export_requests` carries the composite foreign key
+ * `(tenant_id, requested_by_user_id) -> users(tenant_id, id)`, so a stored
+ * requester id must be a user **of the exported company**. That does not hold for
+ * a global administrator: `users.tenant_id` is NULL while the export targets the
+ * company selected in the `X-Tenant-Id` header. Writing their id there violates
+ * the constraint (Prisma P2003) and used to fail the whole request with a 500.
+ *
+ * When the requester is not a member of the company the reference is stored as
+ * NULL and the request is audited as `system`, which is what it is: the company
+ * (not the user) owns the resulting file.
+ */
+function requesterFields(
+  tenantId: string,
+  user: AuthUser,
+  actor: ActorContext
+): { requestedByUserId: string | null; createdBy: string | null; createdByType: ActorContext['type'] } {
+  if (user.tenantId === tenantId) {
+    return { requestedByUserId: user.id, createdBy: actor.id, createdByType: actor.type };
+  }
+
+  logger.info(
+    { userId: user.id, userTenantId: user.tenantId, tenantId },
+    'export_requester_outside_tenant'
+  );
+  return { requestedByUserId: null, createdBy: null, createdByType: 'system' };
 }
 
 @injectable()
@@ -30,28 +61,45 @@ export class ExportService {
       data: {
         id: randomUUID(),
         tenantId,
-        requestedByUserId: user.id,
+        ...requesterFields(tenantId, user, actor),
         priceListId: input.priceListId,
         marketplaceId: input.marketplaceId,
         format: input.format,
         filters: input.search ? { search: input.search } : null,
         status: 'queued',
-        expiresAt: new Date(Date.now() + env.exports.retentionHours * 60 * 60 * 1000),
-        createdBy: actor.id,
-        createdByType: actor.type
+        expiresAt: new Date(Date.now() + env.exports.retentionHours * 60 * 60 * 1000)
       }
     });
   }
 
-  async list(tenantId: string, userId: string): Promise<any[]> {
+  /**
+   * Ownership filter for reading an export back.
+   *
+   * A request queued by a user of the company is owned by that user and stays
+   * private to them. A request queued by a requester who does not belong to the
+   * company (a global administrator; see `requesterFields`) is stored with a NULL
+   * requester and is therefore owned by the company itself. Exposing those rows
+   * to whoever administers the company is what keeps a global-admin export
+   * visible in *My exports* and downloadable after this fix, instead of
+   * disappearing into a row no session can address.
+   */
+  private async ownershipFilter(tenantId: string, user: AuthUser): Promise<Record<string, unknown>> {
+    const ownFiles: Record<string, unknown> = { tenantId, requestedByUserId: user.id };
+    if (!(await this.catalog.canReadAll(user))) return ownFiles;
+    return { tenantId, OR: [ownFiles, { tenantId, requestedByUserId: null }] };
+  }
+
+  async list(tenantId: string, user: AuthUser): Promise<any[]> {
     return this.prisma.exportRequest.findMany({
-      where: { tenantId, requestedByUserId: userId },
+      where: await this.ownershipFilter(tenantId, user),
       orderBy: { createdAt: 'desc' }
     });
   }
 
-  async get(tenantId: string, userId: string, id: string): Promise<any> {
-    const row = await this.prisma.exportRequest.findFirst({ where: { tenantId, requestedByUserId: userId, id } });
+  async get(tenantId: string, user: AuthUser, id: string): Promise<any> {
+    const row = await this.prisma.exportRequest.findFirst({
+      where: { ...(await this.ownershipFilter(tenantId, user)), id }
+    });
     if (!row) throw new NotFoundError('Export request not found');
     if (row.expiresAt && row.expiresAt.getTime() < Date.now() && row.status === 'completed') {
       await this.prisma.exportRequest.update({ where: { id }, data: { status: 'expired' } });
@@ -61,7 +109,7 @@ export class ExportService {
   }
 
   async download(tenantId: string, user: AuthUser, id: string): Promise<{ row: any; content: Buffer }> {
-    const row = await this.get(tenantId, user.id, id);
+    const row = await this.get(tenantId, user, id);
     if (row.status !== 'completed' || !row.storageKey) {
       throw new ValidationError('Export is not ready', [{ field: 'id', message: 'the export is not downloadable' }]);
     }
@@ -87,15 +135,23 @@ export class ExportService {
 
     try {
       const job = await this.prisma.exportRequest.findUnique({ where: { id: queued.id } });
+      /**
+       * The worker reads the whole catalog of the job's company under its own
+       * authority (`price-catalog:read-all` short-circuits `assertVisible`), so it
+       * is nobody's delegate. The id is therefore synthetic and unused: `AuthUser`
+       * requires one, and the request's own requester is unknown by design here —
+       * a global admin's export is owned by the company, stored with a NULL
+       * requester.
+       */
       const workerUser: AuthUser = {
-        id: job.requestedByUserId,
+        id: `worker:${workerId}`,
         email: '',
         name: '',
         roleId: '',
         roleSlug: 'worker',
         tenantId: job.tenantId,
         isGlobalAdmin: true,
-        permissions: ['price-catalog:read-all'],
+        permissions: ['price-catalog:read-all', 'price-catalog:export'],
         // The export worker has no interactive user; exports are not localized
         // in this phase, so the default locale is only a contract placeholder.
         preferredLocale: DEFAULT_LOCALE
